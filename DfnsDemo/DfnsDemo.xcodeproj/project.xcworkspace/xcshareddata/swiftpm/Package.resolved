@@ -1,0 +1,15 @@
+{
+  "originHash" : "b25b9bdd5f3d8ede4732c43090e82da9f1fa140effc9701bcc556ac3d7a0b3e4",
+  "pins" : [
+    {
+      "identity" : "dfns-sdk-swift",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/dfns/dfns-sdk-swift",
+      "state" : {
+        "branch" : "m",
+        "revision" : "b43ee9c8d9e910ee7278ffcd28538be29e664720"
+      }
+    }
+  ],
+  "version" : 3
+}
