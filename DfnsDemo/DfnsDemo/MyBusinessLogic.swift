@@ -30,7 +30,7 @@ final class MyBusinessLogic: ObservableObject {
 
         let registerInitResponse = (await myServer.registerInit(appId: self.appId, username: email)).response
         
-        let credentialInfo = try! passkeySigner.register(
+        let credentialInfo = try! await passkeySigner.register(
             challenge: registerInitResponse.challenge,
             displayName: email,
             userId: registerInitResponse.user.id)
@@ -63,7 +63,7 @@ final class MyBusinessLogic: ObservableObject {
      */
     public func createWallet(authToken: String, passkeySigner: PasskeySigner) async {
         let initWalletResponse = await myServer.initWallet(appId: self.appId, authToken: authToken)
-        let credentialAssertion = try! passkeySigner.sign(challenge: Utils.base64URLUnescaped(initWalletResponse.response.challenge.challenge))
+        let credentialAssertion = try! await passkeySigner.sign(challenge: Utils.base64URLUnescaped(initWalletResponse.response.challenge.challenge))
         let firstFactor = DfnsApi.FirstFactor(kind: "Fido2", credentialAssertion: credentialAssertion)
         let authActionRequest = DfnsApi.AuthActionRequest(challengeIdentifier: initWalletResponse.response.challenge.challengeIdentifier, firstFactor: firstFactor)
         _ = await myServer.completeWallet(appId: self.appId, authToken: authToken, requestBody: initWalletResponse.response.requestBody, signedChallenge: authActionRequest)
