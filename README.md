@@ -70,17 +70,14 @@ In the `./DfnsDemo/DfnsDemo/Config.swift` set the following values,
 - `relyingParty` = same one used for the app creation on the Dfns dashboard (`panda-new-kit.ngrok-free.app`)
 - `appOrigin` = same one used for the app creation on the Dfns dashboard (`https://panda-new-kit.ngrok-free.app`)
 
-**NOTE**
-
-The project uses `react-native-config` to manage the configuration settings. If you ever have to change the settings, there's a bug where the old settings are cached and not properly refreshed. You need to manually clear the cache before rebuild the app.
-
-```
-mobile %  rm node_modules/react-native-config/ios/ReactNativeConfig/GeneratedDotEnv.m
-```
-
 #### Modify associated domain entitlement
 
 For iOS to download the correct `apple-app-site-association` file, you need to modify the associated domain entitlement configuration to point to the right location. Open the file `./DfnsDemo/DfnsDemo/DfnsDemo.entitlements` and change the string value `webcredentials:panda-new-kit.ngrok-free.app?mode=developer` to match your domain.
+
+#### Team Id
+
+If you are using this demo iOS app with the tutorial server, remember to update the team id in the server files: https://github.com/dfns/dfns-sdk-ts/blob/m/examples/sdk/auth-delegated/server/static/apple-app-site-association
+`${TEAMID}.co.dfns.sdk.tutorial.mobile`. If not known, one can retrieve its teamID with this snippet of code: https://stackoverflow.com/a/46727115
 
 #### Enable Passkeys
 
