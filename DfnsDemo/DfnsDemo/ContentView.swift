@@ -41,7 +41,7 @@ struct ContentView: View {
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .padding(.vertical, 15.0)
                     
-                    Text("The delegated signing flow does not need the end user sign with the WebAuthn credential. The login can be performed on the server side transparent to the end user and obtain a readonly auth token. For example, your server can choose to automatically login the end user upon the completion of delegated registration. In this tutorial, this step is shown as explicit in order to more clearly demonstrate how the interaction works.")
+                    Text("The delegated signing flow does not need the end user sign with the WebAuthn credential. The login can be performed on the server side transparent to the end users and obtain a readonly auth token. For example, your server can choose to automatically login the end users upon the completion of delegated registration. In this tutorial, this step is shown as explicit in order to more clearly demonstrate how the interaction works.")
                     
                     NavigationLink("Go to Delegated Login",destination: DelegatedLoginView(userConfig: userConfig, myBusinessLogic: myBusinessLogic)).buttonStyle(.borderedProminent).padding(.vertical, 15)
                     
@@ -52,10 +52,10 @@ struct ContentView: View {
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .padding(.vertical, 15.0)
                     
-                    Text("Once logged in, your end user can retrieve the list of wallets he owns, and create new ones.\n")
+                    Text("Once logged in, the end users can use the wallets they own.")
                     
                     
-                    if(userConfig.authToken != nil && userConfig.passkeySigner != nil){
+                    if(userConfig.authToken != nil && userConfig.passkeysSigner != nil){
                         NavigationLink("Go to Wallets",destination: EndUserWalletsView(userConfig: userConfig, myBusinessLogic: myBusinessLogic)).buttonStyle(.borderedProminent).padding(.vertical, 15)
                     }else{
                         Text("⚠️ You need to complete step 1 and 2 first")
@@ -85,15 +85,20 @@ struct DelegatedRegistrationView: View {
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .padding(.vertical, 15.0)
                     
-                    Text("For this tutorial, you need to register a Dfns EndUser, and this is where the registration flow starts. However, in your final app, the flow may be different and the username might come from your internal system.\n\nEnter the email as the username you are registering, and hit the \"Register User\" button.")
+                    Text("For this tutorial, you will register a Dfns EndUser, and this is where the registration flow starts. However, in your final app, the flow may be different and the username might come from your internal system.")
+                    
+                    Text("After registration, the new end user will have an Ethereum testnet wallet and assigned the system permission, `DfnsDefaultEndUserAccess`, that grants the end user full access to their wallets.").padding(.vertical)
+                    
+                    Text("Enter the email as the username you are registering, and hit the \"Register EndUser\" button.")
+                        .frame(maxWidth: .infinity, alignment: .leading)
                     
                     TextField("Choose a username", text: $userConfig.email).textFieldStyle(.roundedBorder).padding(.vertical)
                     
-                    Button("Register user"){
+                    Button("Register EndUser"){
                         Task{
                             let result =  await myBusinessLogic.registerUser(email: userConfig.email)
-                            userConfig.passkeySigner = result.passkeySigner
-                            registerResponse = result.result
+                            userConfig.passkeysSigner = result.passkeysSigner
+                            registerResponse = result.rawJSON
                         }
                     }.buttonStyle(.borderedProminent).frame(maxWidth: .infinity).padding(.bottom)
                     
@@ -118,13 +123,13 @@ struct DelegatedLoginView: View {
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .padding(.vertical, 15.0)
                     
-                    Text("For this tutorial, the delegated login flow is started on the client side by pressing the \"Login User\" button. A request is sent to the server and a readonly auth token is returned in the response. This flow does not need user to sign with the passkey credential.")
+                    Text("For this tutorial, the delegated login flow is started on the client side by pressing the \"Login EndUser\" button. A request is sent to the server and a readonly auth token is returned in the response. This flow does not need users to sign with the WebAuthn credential.")
                     
-                    Text("This auth token is readonly and needs to be cached and passed along with all requests interacting with the Dfns API. To clearly demonstrate all the necessary components for each step, this example will cache the auth token in the application context and send it back with every request to the server. You should however choose a more secure caching method.").padding(.vertical)
+                    Text("This auth token is readonly and needs to be cached and passed along with all requests interacting with the Dfns API. To clearly demonstrate all the necessary components for each step, this example will cache the auth token in the application context and send it back with every sequently request to the server. You should however choose a more secure caching method.").padding(.vertical)
                     
                     TextField("Enter the username", text: $userConfig.email).textFieldStyle(.roundedBorder)
                     
-                    Button("Login user"){
+                    Button("Login EndUser"){
                         Task{
                             let result = await myBusinessLogic.delegatedLogin(email: userConfig.email)
                             loginResponse = result.rawJSON
@@ -169,7 +174,7 @@ struct EndUserWalletsView: View {
                     
                     Button("Sign Message"){
                         Task{
-                            signingResponse = await myBusinessLogic.signMessage(message: messageToSign, walletId: walletId, authToken: userConfig.authToken!, passkeySigner: userConfig.passkeySigner!)
+                            signingResponse = await myBusinessLogic.signMessage(message: messageToSign, walletId: walletId, authToken: userConfig.authToken!, passkeysSigner: userConfig.passkeysSigner!)
                             
                         }
                     }.buttonStyle(.borderedProminent).frame(maxWidth: .infinity).padding(.vertical)
@@ -208,9 +213,5 @@ struct JSONText: View {
 }
 
 #Preview {
-    EndUserWalletsView(userConfig: UserConfig(), myBusinessLogic: MyBusinessLogic(
-        url: Config.url,
-        appId: Config.appId,
-        relyingParty: Config.relyingParty,
-        appOrigin: Config.appOrigin))
+    EndUserWalletsView(userConfig: UserConfig(), myBusinessLogic: MyBusinessLogic( url: Config.url, appId: Config.appId))
 }

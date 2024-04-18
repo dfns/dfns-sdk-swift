@@ -12,11 +12,11 @@ final class MyServer {
         self.url = url
     }
     
-    typealias ServerResponse<T> = (rawResponse: String, response: T)
+    typealias ServerResponse<T> = (rawJSON: String, response: T)
     
     struct Ignore: Codable{}
     
-    public func registerInit(appId: String, username: String) async -> ServerResponse<DfnsApi.CreateDelegatedUserRegistrationResponse>  {
+    public func registerInit(appId: String, username: String) async -> ServerResponse<DfnsApi.UserRegistrationChallenge>  {
         struct RegisterInit : Codable{
             let appId: String
             let username: String
@@ -25,12 +25,12 @@ final class MyServer {
         return await self.makeRequest(
             path: "/register/init",
             body: RegisterInit(appId: appId, username: username),
-            decoder: DfnsApi.CreateDelegatedUserRegistrationResponse.self
+            decoder: DfnsApi.UserRegistrationChallenge.self
         )
     }
     
     struct SignedChallenge : Codable {
-        let firstFactorCredential: DfnsApi.FirstFactorCredential
+        let firstFactorCredential: DfnsApi.Fido2Attestation
     }
     
     public func registerComplete(appId: String, signedChallenge: SignedChallenge, temporaryAuthenticationToken: String) async -> ServerResponse<Ignore>  {
@@ -89,7 +89,7 @@ final class MyServer {
     
     struct InitSignatureResponse: Codable{
         let requestBody: RequestBody
-        let challenge: DfnsApi.AuthActionInitResponse
+        let challenge: DfnsApi.UserActionChallenge
     }
     
     struct RequestBody: Codable{
@@ -107,7 +107,7 @@ final class MyServer {
         )
     }
     
-    public func completeSignature(walletId: String, appId: String, authToken: String, requestBody: RequestBody, signedChallenge: DfnsApi.AuthActionRequest) async -> ServerResponse<Ignore> {
+    public func completeSignature(walletId: String, appId: String, authToken: String, requestBody: RequestBody, signedChallenge: DfnsApi.UserActionAssertion) async -> ServerResponse<Ignore> {
         struct InitSignature: Codable{ let message: String; let walletId: String; let appId: String ; let authToken: String }
         
         struct CompleteSignature: Codable{
@@ -115,7 +115,7 @@ final class MyServer {
             let appId: String
             let authToken: String
             let requestBody: RequestBody
-            let signedChallenge: DfnsApi.AuthActionRequest
+            let signedChallenge: DfnsApi.UserActionAssertion
         }
         
         return await self.makeRequest(
@@ -125,17 +125,21 @@ final class MyServer {
         )
     }
 
-    private func makeRequest<T: Codable>(path: String, body: Codable, decoder: T.Type) async  -> (rawResponse: String, response: T)  {
+    private func makeRequest<T: Codable>(path: String, body: Codable, decoder: T.Type) async  -> (rawJSON: String, response: T)  {
+        let encoder = JSONEncoder()
+        // requestBody needs to follow the same order returned by the API
+        encoder.outputFormatting = [.sortedKeys]
+        
         var request = URLRequest(url: URL(string: "\(self.url)\(path)")!)
         request.httpMethod = "POST"
-        request.httpBody = (try? JSONEncoder().encode(body))!
+        request.httpBody = (try? encoder.encode(body))!
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.setValue("application/json", forHTTPHeaderField: "Accept")
         
         let (data, _) = try! await URLSession.shared.data(for: request)
         let response: T = try! JSONDecoder().decode(T.self, from: data)
         
-        return (rawResponse: String(data: data, encoding: .utf8)!, response: response)
+        return (rawJSON: String(data: data, encoding: .utf8)!, response: response)
     }
     
 }

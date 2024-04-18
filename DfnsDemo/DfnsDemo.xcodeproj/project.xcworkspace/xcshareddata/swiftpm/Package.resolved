@@ -6,8 +6,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/dfns/dfns-sdk-swift",
       "state" : {
-        "branch" : "m",
-        "revision" : "72f14c9cf24ea95ab5c262a0cd7834486909059c"
+        "branch" : "code-review",
+        "revision" : "cfc56157317ddb8071e204f05870212bf4d8baae"
       }
     }
   ],
