@@ -55,29 +55,34 @@ final class MyBusinessLogic: ObservableObject {
     }
     
     /**
-     Step 3 of our demo. Create wallets using the passkey signer
-
-     - Parameters:
-        - passkeySigner: passkey signer created in Step 1
-        - authToken: Authentication token retrieved in Step 2
-     */
-    public func createWallet(authToken: String, passkeySigner: PasskeySigner) async {
-        let initWalletResponse = await myServer.initWallet(appId: self.appId, authToken: authToken)
-        let credentialAssertion = try! await passkeySigner.sign(challenge: Utils.base64URLUnescaped(initWalletResponse.response.challenge.challenge))
-        let firstFactor = DfnsApi.FirstFactor(kind: "Fido2", credentialAssertion: credentialAssertion)
-        let authActionRequest = DfnsApi.AuthActionRequest(challengeIdentifier: initWalletResponse.response.challenge.challengeIdentifier, firstFactor: firstFactor)
-        _ = await myServer.completeWallet(appId: self.appId, authToken: authToken, requestBody: initWalletResponse.response.requestBody, signedChallenge: authActionRequest)
-    }
-    
-    /**
      Step 3 of our demo. For a given authToken retrieve the users wallets as a JSON string
 
      - Parameters:
         - passkeySigner: passkey signer created in Step 1
         - authToken: Authentication token retrieved in Step 2
      */
-    public func listWallets(authToken: String) async -> String{
-        return (await myServer.listWallets(appId: self.appId, authToken: authToken)).rawResponse
+    public func listWallets(authToken: String) async -> (rawJSON: String, walletId: String){
+        let result = await myServer.listWallets(appId: self.appId, authToken: authToken)
+        
+        let walletId = result.response.items[0].id
+        return (rawJSON: result.rawResponse, walletId: walletId)
+    }
+    
+    /**
+     Step 3 of our demo. Create wallets using the passkey signer
+
+     - Parameters:
+        - passkeySigner: passkey signer created in Step 1
+        - authToken: Authentication token retrieved in Step 2
+     */
+    public func signMessage(message: String, walletId: String, authToken: String, passkeySigner: PasskeySigner) async -> String {
+        let initWalletResult = await myServer.initSignature(message: message, walletId: walletId, appId: self.appId, authToken: authToken)
+        let credentialAssertion = try! await passkeySigner.sign(challenge: Utils.base64URLUnescaped(initWalletResult.response.challenge.challenge))
+        let firstFactor = DfnsApi.FirstFactor(kind: "Fido2", credentialAssertion: credentialAssertion)
+        let authActionRequest = DfnsApi.AuthActionRequest(challengeIdentifier: initWalletResult.response.challenge.challengeIdentifier, firstFactor: firstFactor)
+        let result = await myServer.completeSignature(walletId: walletId, appId: self.appId, authToken: authToken, requestBody: initWalletResult.response.requestBody, signedChallenge: authActionRequest)
+        
+        return result.rawResponse
     }
 }
 

@@ -144,6 +144,9 @@ struct EndUserWalletsView: View {
     @ObservedObject var userConfig: UserConfig
     @ObservedObject var myBusinessLogic: MyBusinessLogic
     @State var walletResponse: String = ""
+    @State var messageToSign: String = ""
+    @State var signingResponse: String = ""
+    @State var walletId: String = ""
     
     var body: some View {
         NavigationView{
@@ -154,22 +157,31 @@ struct EndUserWalletsView: View {
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .padding(.vertical, 15.0)
                     
-                    Text("Listing the wallets only needs the readonly auth token and do not use WebAuthn signing. You won't be prompted to use the credential on screen load.")
+                    Text("The Ethereum testnet wallet created for the end user during registration is listed below. Listing wallets only needs the readonly auth token. End users won't be prompted to use their WebAuthn credentials.")
                     
                     JSONText(walletResponse).padding(.vertical)
                     
-                    Text("Creating a new wallet will require the end user to sign a challenge in order to complete the request. You will see the WebAuthn prompt show up after pressing the \"Create New Wallet\" button. After the action is authorized, a new wallet is created for the logged in end user.")
+                    Text("Use wallets to broadcast transactions will require the end users to sign a challenge each time to authorize the action. For this tutorial, because new wallets do not have any native tokens to pay for gas fees, we won't be able to broadcast any transactions to chain. Instead, we will sign an arbitrary message that can be used as proof the end user is the owner of the private key secured by Dfns.")
                     
-                    Button("Create New Wallet"){
+                    Text("Enter a message in the input box and press the \"Sign Message\" button. You will see a WebAuthn prompt asking for authorization to perform the action. Once granted, the tutorial makes a request to Dfns MPC signers and gets a signature hash. Optionally you can use etherscan to verify this signature hash matches the wallet address.").padding(.vertical)
+                    
+                    TextField("Enter your message", text: $messageToSign).textFieldStyle(.roundedBorder)
+                    
+                    Button("Sign Message"){
                         Task{
-                            await myBusinessLogic.createWallet(authToken: userConfig.authToken!, passkeySigner: userConfig.passkeySigner!)
-                            walletResponse = await myBusinessLogic.listWallets(authToken: userConfig.authToken!)
+                            signingResponse = await myBusinessLogic.signMessage(message: messageToSign, walletId: walletId, authToken: userConfig.authToken!, passkeySigner: userConfig.passkeySigner!)
+                            
                         }
                     }.buttonStyle(.borderedProminent).frame(maxWidth: .infinity).padding(.vertical)
                     
+                    JSONText(signingResponse)
+                    
                 }.padding().onAppear {
                     Task{
-                        walletResponse = await myBusinessLogic.listWallets(authToken: userConfig.authToken!)
+                        let listWalletsResult = await myBusinessLogic.listWallets(authToken: userConfig.authToken!)
+                        
+                        walletResponse = listWalletsResult.rawJSON
+                        walletId = listWalletsResult.walletId
                     }
                 }
             }
@@ -196,7 +208,7 @@ struct JSONText: View {
 }
 
 #Preview {
-    DelegatedLoginView(userConfig: UserConfig(), myBusinessLogic: MyBusinessLogic(
+    EndUserWalletsView(userConfig: UserConfig(), myBusinessLogic: MyBusinessLogic(
         url: Config.url,
         appId: Config.appId,
         relyingParty: Config.relyingParty,

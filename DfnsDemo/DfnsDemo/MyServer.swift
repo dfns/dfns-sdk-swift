@@ -64,8 +64,17 @@ final class MyServer {
             decoder: LoginResponse.self
         )
     }
+    
+    struct Wallet : Codable{
+        // We partially decode the Wallet object
+        let id: String
+    }
+    
+    struct ListWalletResponse : Codable{
+        let items: [Wallet]
+    }
 
-    public func listWallets(appId: String, authToken: String) async -> ServerResponse<Ignore>{
+    public func listWallets(appId: String, authToken: String) async -> ServerResponse<ListWalletResponse>{
         struct ListWallets: Codable{
             let appId: String
             let authToken: String
@@ -74,31 +83,35 @@ final class MyServer {
         return await self.makeRequest(
             path: "/wallets/list",
             body: ListWallets(appId: appId, authToken: authToken),
-            decoder: Ignore.self
+            decoder: ListWalletResponse.self
         )
     }
     
-    struct InitWalletResponse: Codable{
+    struct InitSignatureResponse: Codable{
         let requestBody: RequestBody
         let challenge: DfnsApi.AuthActionInitResponse
     }
     
     struct RequestBody: Codable{
-        let network: String
+        let kind: String
+        let message: String
     }
     
-    public func initWallet(appId: String, authToken: String) async -> ServerResponse<InitWalletResponse> {
-        struct InitWallet: Codable{ let appId: String ; let authToken: String }
+    public func initSignature(message: String, walletId: String, appId: String, authToken: String) async -> ServerResponse<InitSignatureResponse> {
+        struct InitSignature: Codable{ let message: String; let walletId: String; let appId: String ; let authToken: String }
         
         return await self.makeRequest(
-            path: "/wallets/new/init",
-            body: InitWallet(appId: appId, authToken: authToken),
-            decoder: InitWalletResponse.self
+            path: "/wallets/signatures/init",
+            body: InitSignature(message: message, walletId: walletId, appId: appId, authToken: authToken),
+            decoder: InitSignatureResponse.self
         )
     }
     
-    public func completeWallet(appId: String, authToken: String, requestBody: RequestBody, signedChallenge: DfnsApi.AuthActionRequest) async -> ServerResponse<Ignore> {
-        struct CompleteWallet: Codable{
+    public func completeSignature(walletId: String, appId: String, authToken: String, requestBody: RequestBody, signedChallenge: DfnsApi.AuthActionRequest) async -> ServerResponse<Ignore> {
+        struct InitSignature: Codable{ let message: String; let walletId: String; let appId: String ; let authToken: String }
+        
+        struct CompleteSignature: Codable{
+            let walletId: String
             let appId: String
             let authToken: String
             let requestBody: RequestBody
@@ -106,8 +119,8 @@ final class MyServer {
         }
         
         return await self.makeRequest(
-            path: "/wallets/new/complete",
-            body: CompleteWallet(appId: appId, authToken: authToken, requestBody: requestBody, signedChallenge: signedChallenge),
+            path: "/wallets/signatures/complete",
+            body: CompleteSignature(walletId: walletId, appId: appId, authToken: authToken, requestBody: requestBody, signedChallenge: signedChallenge),
             decoder: Ignore.self
         )
     }
