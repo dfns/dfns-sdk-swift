@@ -7,7 +7,7 @@ import Foundation
 typealias RCTPromiseResolveBlock = (NSDictionary) -> Void
 typealias RCTPromiseRejectBlock = (String?, String?, String?) -> Void
 
-final class RCTConvert {
+enum RCTConvert {
     static func nsData(_ string: String) -> Data {
         return string.data(using: .utf8)!
     }

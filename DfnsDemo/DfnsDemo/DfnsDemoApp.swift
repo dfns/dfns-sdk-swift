@@ -1,8 +1,8 @@
-import SwiftUI
 import DfnsSdk
+import SwiftUI
 
 class UserConfig: ObservableObject {
-    init(){email = ""}
+    init() { email = "" }
     @Published var authToken: String?
     @Published var passkeysSigner: PasskeysSigner?
     @Published var email: String
@@ -15,7 +15,7 @@ struct DfnsDemoApp: App {
         url: Config.url,
         appId: Config.appId
     )
-        
+
     var body: some Scene {
         WindowGroup {
             ContentView(userConfig: userConfig, myBusinessLogic: myBusinessLogic)

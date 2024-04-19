@@ -1,7 +1,7 @@
 /**
     Utils to manipulate base64Url string
  */
-public final class Utils {
+public enum Utils {
     public static func base64URLUnescaped(_ base: String) -> String {
         let replaced = base.replacingOccurrences(of: "-", with: "+").replacingOccurrences(of: "_", with: "/")
         let padding = replaced.count % 4
@@ -11,7 +11,7 @@ public final class Utils {
             return replaced
         }
     }
-    
+
     public static func base64URLEscape(_ base: String) -> String {
         return base.replacingOccurrences(of: "+", with: "-").replacingOccurrences(of: "/", with: "_").replacingOccurrences(of: "=", with: "")
     }
