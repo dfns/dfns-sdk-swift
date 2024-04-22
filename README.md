@@ -27,23 +27,19 @@ This request signature serves as cryptographic proof that only authorized entiti
 While implementing an iOS application your backend server will have to communicate with the DFNS API to retrieve this challenge and pass it to your application, `PasskeySigner` will be used to register and authenticate a user.
 
 ```
-let passkeySigner = PasskeySigner(appOrigin: "https://app.dfns.wtf", relyingParty: "airedale-finer-baboon.ngrok-free.app")
+let passkeysSigner = PasskeysSigner()
 ```
 
 #### Register
 
 ```
-let credentialInfo = try! passkeySigner.register(
-	challenge: "Y2gtN2NoZmEtdjdxZTgtOWZucHBhZTYzM2F1YW5xYQ",
-	displayName: "my-user@gmail.com,
-	userId: "us-7o7m3-t9ra9-9mvo5eessqtg9log"
-)
+let fido2Attestation = try! await passkeysSigner.register(challenge: challenge)
 ```
 
 #### Sign
 
 ```
-let credentialAssertion = try! passkeySigner.sign(challenge: "Y2gtNXM1djAtcm40aDUtOXEwcnQyNjY4NWhvZnYybw")
+let fido2Assertion = try! await passkeysSigner.sign(challenge: challenge)
 ```
 
 ## DfnsDemo
@@ -67,8 +63,6 @@ In the `./DfnsDemo/DfnsDemo/Config.swift` set the following values,
 
 - `appId` = the `App ID` of the new `Application`
 - `url` = either `http://localhost:8000` or if using ngrok, the public url `https://panda-new-kit.ngrok-free.app`
-- `relyingParty` = same one used for the app creation on the Dfns dashboard (`panda-new-kit.ngrok-free.app`)
-- `appOrigin` = same one used for the app creation on the Dfns dashboard (`https://panda-new-kit.ngrok-free.app`)
 
 #### Modify associated domain entitlement
 
