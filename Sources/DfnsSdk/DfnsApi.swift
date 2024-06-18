@@ -83,15 +83,13 @@ public enum DfnsApi {
     }
 
     public struct PublicKeyCredentialDescriptor: Codable {
-        public init(type: String, id: String, transports: String?) {
+        public init(type: String, id: String) {
             self.type = type
             self.id = id
-            self.transports = transports
         }
 
         public let type: String
         public let id: String
-        public let transports: String?
     }
 
     public struct Fido2Assertion: Codable {
