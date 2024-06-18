@@ -25,7 +25,7 @@ public enum DfnsApi {
     }
 
     public struct UserRegistrationChallenge: Codable {
-        public init(temporaryAuthenticationToken: String, rp: DfnsApi.RelyingParty, user: DfnsApi.UserInformation, supportedCredentialKinds: DfnsApi.SupportedCredentialKinds, otpUrl: String, challenge: String, authenticatorSelection: DfnsApi.AuthenticatorSelectionCriteria, attestation: String, pubKeyCredParams: [DfnsApi.PublicKeyCredentialParameters], excludeCredentials: [DfnsApi.AllowCredentials]) {
+        public init(temporaryAuthenticationToken: String, rp: DfnsApi.RelyingParty, user: DfnsApi.UserInformation, supportedCredentialKinds: DfnsApi.SupportedCredentialKinds, otpUrl: String, challenge: String, authenticatorSelection: DfnsApi.AuthenticatorSelectionCriteria, attestation: String, pubKeyCredParams: [DfnsApi.PublicKeyCredentialParameters], excludeCredentials: [DfnsApi.PublicKeyCredentialDescriptor]) {
             self.temporaryAuthenticationToken = temporaryAuthenticationToken
             self.rp = rp
             self.user = user
@@ -47,7 +47,7 @@ public enum DfnsApi {
         public let authenticatorSelection: AuthenticatorSelectionCriteria
         public let attestation: String
         public let pubKeyCredParams: [PublicKeyCredentialParameters]
-        public let excludeCredentials: [AllowCredentials]
+        public let excludeCredentials: [PublicKeyCredentialDescriptor]
     }
 
     public struct RelyingParty: Codable {
@@ -83,13 +83,15 @@ public enum DfnsApi {
     }
 
     public struct PublicKeyCredentialDescriptor: Codable {
-        public init(type: String, id: String) {
+        public init(type: String, id: String, transports: String?) {
             self.type = type
             self.id = id
+            self.transports = transports
         }
 
         public let type: String
         public let id: String
+        public let transports: String?
     }
 
     public struct Fido2Assertion: Codable {
