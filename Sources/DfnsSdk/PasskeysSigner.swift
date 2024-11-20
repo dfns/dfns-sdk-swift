@@ -3,6 +3,7 @@ import Foundation
 public enum PasskeysSignerError: Error {
     // Throw in all other cases
     case unexpected(code: String?, message: String?, error: String?)
+    case relyingPartyNotWhitelisted(message: String?)
 }
 
 /**
@@ -10,9 +11,19 @@ public enum PasskeysSignerError: Error {
  Converts completion handlers into async functions and make the necessary conversion to work with Dfns API
  */
 public final class PasskeysSigner {
-    private var passkey = Passkey()
+    private let passkey = Passkey()
+    
+    /**
+     The relying party ID identifies your application to users, when users create/use passkeys. (Read more [here](https://www.w3.org/TR/webauthn-2/#relying-party)).
+     It is a valid domain string identifying the WebAuthn Relying Party. In other words, its the domain your application is running on, which will be tied to the passkeys that users create.
+     We advise to use the root domain, not the full domain (eg `acme.com`, not `app.acme.com` nor `foo.app.acme.com`), that way, passkeys created
+     by your users can be re-used on other subdomains (eg. on `foo.acme.com` and `bar.acme.com`) in the future. Read more [here](https://developer.mozilla.org/en-US/docs/Web/API/PublicKeyCredentialCreationOptions#rp).
+     */
+    private let relyingPartyId: String
 
-    public init() {}
+    public init(relyingPartyId: String) {
+        self.relyingPartyId = relyingPartyId
+    }
 
     public func register(challenge: DfnsApi.UserRegistrationChallenge) async throws -> DfnsApi.Fido2Attestation {
         if #available(macOS 10.15, iOS 13.0, watchOS 6.0, tvOS 13.0, *) {
@@ -32,13 +43,12 @@ public final class PasskeysSigner {
         }
     }
 
-    private func register(challenge: DfnsApi.UserRegistrationChallenge, completion: @escaping (DfnsApi.Fido2Attestation?, PasskeysSignerError?) -> Void) {
+    private func register(challenge: DfnsApi.UserRegistrationChallenge, completion: @escaping (DfnsApi.Fido2Attestation?, Error?) -> Void) {
         let userId = challenge.user.id
         let displayName = challenge.user.displayName
-        let relyingParty = challenge.rp.id
-        let challenge = Utils.base64URLUnescaped(challenge.challenge)
+        let challengeBase64url = Utils.base64URLUnescaped(challenge.challenge)
 
-        passkey.register(relyingParty, challenge: challenge, displayName: displayName, userId: userId, securityKey: false,
+        passkey.register(self.relyingPartyId, challenge: challengeBase64url, displayName: displayName, userId: userId, securityKey: false,
                          resolve: { authResult in
                              let credentialInfo = DfnsApi.Fido2AttestationData(
                                  attestationData: self.extractFromAuthResultValue(authResult, path: ["response", "rawAttestationObject"]),
@@ -71,11 +81,10 @@ public final class PasskeysSigner {
         }
     }
 
-    private func sign(challenge: DfnsApi.UserActionChallenge, completion: @escaping (DfnsApi.Fido2Assertion?, PasskeysSignerError?) -> Void) {
-        let relyingParty = challenge.rp.id
-        let challenge = Utils.base64URLUnescaped(challenge.challenge)
+    private func sign(challenge: DfnsApi.UserActionChallenge, completion: @escaping (DfnsApi.Fido2Assertion?, Error?) -> Void) {
+        let challengeBase64url = Utils.base64URLUnescaped(challenge.challenge)
 
-        passkey.authenticate(relyingParty, challenge: challenge, securityKey: false, resolve: { authResult in
+        passkey.authenticate(self.relyingPartyId, challenge: challengeBase64url, securityKey: false, resolve: { authResult in
             let credentialAssertion = DfnsApi.Fido2AssertionData(
                 clientData: self.extractFromAuthResultValue(authResult, path: ["response", "rawClientDataJSON"]),
                 credId: self.extractFromAuthResultValue(authResult, path: ["credentialID"]),

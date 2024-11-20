@@ -3,13 +3,12 @@
  */
 public enum DfnsApi {
     public struct UserActionChallenge: Codable {
-        public init(attestation: String, userVerification: String, externalAuthenticationUrl: String, challenge: String, challengeIdentifier: String, rp: DfnsApi.RelyingParty, supportedCredentialKinds: [DfnsApi.SupportedCredentialKind], allowCredentials: DfnsApi.AllowCredentials) {
+        public init(attestation: String, userVerification: String, externalAuthenticationUrl: String, challenge: String, challengeIdentifier: String, supportedCredentialKinds: [DfnsApi.SupportedCredentialKind], allowCredentials: DfnsApi.AllowCredentials) {
             self.attestation = attestation
             self.userVerification = userVerification
             self.externalAuthenticationUrl = externalAuthenticationUrl
             self.challenge = challenge
             self.challengeIdentifier = challengeIdentifier
-            self.rp = rp
             self.supportedCredentialKinds = supportedCredentialKinds
             self.allowCredentials = allowCredentials
         }
@@ -19,15 +18,13 @@ public enum DfnsApi {
         public let externalAuthenticationUrl: String
         public let challenge: String
         public let challengeIdentifier: String
-        public let rp: RelyingParty
         public let supportedCredentialKinds: [SupportedCredentialKind]
         public let allowCredentials: AllowCredentials
     }
 
     public struct UserRegistrationChallenge: Codable {
-        public init(temporaryAuthenticationToken: String, rp: DfnsApi.RelyingParty, user: DfnsApi.UserInformation, supportedCredentialKinds: DfnsApi.SupportedCredentialKinds, otpUrl: String, challenge: String, authenticatorSelection: DfnsApi.AuthenticatorSelectionCriteria, attestation: String, pubKeyCredParams: [DfnsApi.PublicKeyCredentialParameters], excludeCredentials: [DfnsApi.PublicKeyCredentialDescriptor]) {
+        public init(temporaryAuthenticationToken: String, user: DfnsApi.UserInformation, supportedCredentialKinds: DfnsApi.SupportedCredentialKinds, otpUrl: String, challenge: String, authenticatorSelection: DfnsApi.AuthenticatorSelectionCriteria, attestation: String, pubKeyCredParams: [DfnsApi.PublicKeyCredentialParameters], excludeCredentials: [DfnsApi.PublicKeyCredentialDescriptor]) {
             self.temporaryAuthenticationToken = temporaryAuthenticationToken
-            self.rp = rp
             self.user = user
             self.supportedCredentialKinds = supportedCredentialKinds
             self.otpUrl = otpUrl
@@ -39,7 +36,6 @@ public enum DfnsApi {
         }
 
         public let temporaryAuthenticationToken: String
-        public let rp: RelyingParty
         public let user: UserInformation
         public let supportedCredentialKinds: SupportedCredentialKinds
         public let otpUrl: String

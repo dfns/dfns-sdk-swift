@@ -12,8 +12,9 @@ class UserConfig: ObservableObject {
 struct DfnsDemoApp: App {
     @StateObject private var userConfig = UserConfig()
     @StateObject private var myBusinessLogic = MyBusinessLogic(
-        url: Config.url,
-        appId: Config.appId
+        url: Config.serverUrl,
+        appId: Config.dfnsAppId
+        passkeyRelyingPartyId: Config.passkeyRelyingPartyId
     )
 
     var body: some Scene {
