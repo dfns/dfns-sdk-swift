@@ -209,5 +209,5 @@ struct JSONText: View {
 }
 
 #Preview {
-    EndUserWalletsView(userConfig: UserConfig(), myBusinessLogic: MyBusinessLogic(url: Config.url, appId: Config.appId))
+    EndUserWalletsView(userConfig: UserConfig(), myBusinessLogic: MyBusinessLogic(url: Config.serverUrl, appId: Config.dfnsAppId, passkeyRelyingPartyId: Config.passkeyRelyingPartyId))
 }

@@ -6,10 +6,12 @@ import Foundation
  */
 final class MyBusinessLogic: ObservableObject {
     private var appId: String
+    private var passkeyRelyingPartyId: String
     private var myServer: MyServer
 
-    init(url: String, appId: String) {
+    init(url: String, appId: String, passkeyRelyingPartyId: String) {
         self.appId = appId
+        self.passkeyRelyingPartyId = passkeyRelyingPartyId
         myServer = MyServer(url: url)
     }
 
@@ -21,7 +23,7 @@ final class MyBusinessLogic: ObservableObject {
      - Returns: Tuple containing the response from our server API and the passkeySigner
      */
     public func registerUser(email: String) async -> (rawJSON: String, passkeysSigner: PasskeysSigner) {
-        let passkeysSigner = PasskeysSigner()
+        let passkeysSigner = PasskeysSigner(relyingPartyId: self.passkeyRelyingPartyId)
         let registerInitResponse = (await myServer.registerInit(appId: appId, username: email)).response
         let fido2Attestation = try! await passkeysSigner.register(challenge: registerInitResponse)
         let signedChallenge = MyServer.SignedChallenge(firstFactorCredential: fido2Attestation)
