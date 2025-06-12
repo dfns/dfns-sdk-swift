@@ -5,12 +5,10 @@ import Foundation
     Controller that is doing the interface between the UI, the Demo Server and the Passkey Signer
  */
 final class MyBusinessLogic: ObservableObject {
-    private var appId: String
     private var passkeyRelyingPartyId: String
     private var myServer: MyServer
 
-    init(url: String, appId: String, passkeyRelyingPartyId: String) {
-        self.appId = appId
+    init(url: String, passkeyRelyingPartyId: String) {
         self.passkeyRelyingPartyId = passkeyRelyingPartyId
         myServer = MyServer(url: url)
     }
@@ -24,10 +22,10 @@ final class MyBusinessLogic: ObservableObject {
      */
     public func registerUser(email: String) async -> (rawJSON: String, passkeysSigner: PasskeysSigner) {
         let passkeysSigner = PasskeysSigner(relyingPartyId: self.passkeyRelyingPartyId)
-        let registerInitResponse = (await myServer.registerInit(appId: appId, username: email)).response
+        let registerInitResponse = (await myServer.registerInit(username: email)).response
         let fido2Attestation = try! await passkeysSigner.register(challenge: registerInitResponse)
         let signedChallenge = MyServer.SignedChallenge(firstFactorCredential: fido2Attestation)
-        let result = await myServer.registerComplete(appId: appId, signedChallenge: signedChallenge, temporaryAuthenticationToken: registerInitResponse.temporaryAuthenticationToken)
+        let result = await myServer.registerComplete(signedChallenge: signedChallenge, temporaryAuthenticationToken: registerInitResponse.temporaryAuthenticationToken)
 
         return (rawJSON: result.rawJSON, passkeysSigner: passkeysSigner)
     }
@@ -51,7 +49,7 @@ final class MyBusinessLogic: ObservableObject {
         - authToken: Authentication token retrieved in Step 2
      */
     public func listWallets(authToken: String) async -> (rawJSON: String, walletId: String) {
-        let result = await myServer.listWallets(appId: appId, authToken: authToken)
+        let result = await myServer.listWallets(authToken: authToken)
 
         let walletId = result.response.items[0].id
         return (rawJSON: result.rawJSON, walletId: walletId)
@@ -67,10 +65,10 @@ final class MyBusinessLogic: ObservableObject {
         - passkeySigner: passkeys signer created in Step 1
      */
     public func signMessage(message: String, walletId: String, authToken: String, passkeysSigner: PasskeysSigner) async -> String {
-        let initWalletResult = await myServer.initSignature(message: message, walletId: walletId, appId: appId, authToken: authToken)
+        let initWalletResult = await myServer.initSignature(message: message, walletId: walletId, authToken: authToken)
         let fido2Assertion = try! await passkeysSigner.sign(challenge: initWalletResult.response.challenge)
         let userActionAssertion = DfnsApi.UserActionAssertion(challengeIdentifier: initWalletResult.response.challenge.challengeIdentifier, firstFactor: fido2Assertion)
-        let result = await myServer.completeSignature(walletId: walletId, appId: appId, authToken: authToken, requestBody: initWalletResult.response.requestBody, signedChallenge: userActionAssertion)
+        let result = await myServer.completeSignature(walletId: walletId, authToken: authToken, requestBody: initWalletResult.response.requestBody, signedChallenge: userActionAssertion)
 
         return result.rawJSON
     }

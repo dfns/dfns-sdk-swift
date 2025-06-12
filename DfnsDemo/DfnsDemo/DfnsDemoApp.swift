@@ -13,7 +13,6 @@ struct DfnsDemoApp: App {
     @StateObject private var userConfig = UserConfig()
     @StateObject private var myBusinessLogic = MyBusinessLogic(
         url: Config.serverUrl,
-        appId: Config.dfnsAppId
         passkeyRelyingPartyId: Config.passkeyRelyingPartyId
     )
 
