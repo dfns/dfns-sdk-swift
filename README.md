@@ -61,7 +61,6 @@ After the `Application` is created, copy and save the `App ID`, e.g. `ap-39abb-5
 
 In the `./DfnsDemo/DfnsDemo/Config.swift` set the following values,
 
-- `appId` = the `App ID` of the new `Application`
 - `url` = either `http://localhost:8000` or if using ngrok, the public url `https://panda-new-kit.ngrok-free.app`
 
 #### Modify associated domain entitlement
