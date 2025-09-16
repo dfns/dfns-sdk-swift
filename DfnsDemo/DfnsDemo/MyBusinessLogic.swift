@@ -20,14 +20,13 @@ final class MyBusinessLogic: ObservableObject {
 
      - Returns: Tuple containing the response from our server API and the passkeySigner
      */
-    public func registerUser(email: String) async -> (rawJSON: String, passkeysSigner: PasskeysSigner) {
-        let passkeysSigner = PasskeysSigner(relyingPartyId: self.passkeyRelyingPartyId)
-        let registerInitResponse = (await myServer.registerInit(username: email)).response
-        let fido2Attestation = try! await passkeysSigner.register(challenge: registerInitResponse)
+    public func registerUser(userConfig: UserConfig) async -> String {
+        let registerInitResponse = (await myServer.registerInit(username: userConfig.email)).response
+        let fido2Attestation = try! await userConfig.passkeysSigner.register(challenge: registerInitResponse)
         let signedChallenge = MyServer.SignedChallenge(firstFactorCredential: fido2Attestation)
         let result = await myServer.registerComplete(signedChallenge: signedChallenge, temporaryAuthenticationToken: registerInitResponse.temporaryAuthenticationToken)
 
-        return (rawJSON: result.rawJSON, passkeysSigner: passkeysSigner)
+        return result.rawJSON
     }
 
     /**

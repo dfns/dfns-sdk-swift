@@ -2,9 +2,12 @@ import DfnsSdk
 import SwiftUI
 
 class UserConfig: ObservableObject {
-    init() { email = "" }
+    init() {
+        email = ""
+        passkeysSigner = PasskeysSigner(relyingPartyId: Config.passkeyRelyingPartyId)
+    }
     @Published var authToken: String?
-    @Published var passkeysSigner: PasskeysSigner?
+    @Published var passkeysSigner: PasskeysSigner
     @Published var email: String
 }
 
