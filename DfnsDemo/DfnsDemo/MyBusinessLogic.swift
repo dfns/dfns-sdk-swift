@@ -7,10 +7,12 @@ import Foundation
 final class MyBusinessLogic: ObservableObject {
     private var passkeyRelyingPartyId: String
     private var myServer: MyServer
+    private var passkeysSigner: PasskeysSigner
 
     init(url: String, passkeyRelyingPartyId: String) {
         self.passkeyRelyingPartyId = passkeyRelyingPartyId
-        myServer = MyServer(url: url)
+        self.myServer = MyServer(url: url)
+        self.passkeysSigner = PasskeysSigner(relyingPartyId: passkeyRelyingPartyId)
     }
 
     /**
@@ -21,10 +23,10 @@ final class MyBusinessLogic: ObservableObject {
      - Returns: Tuple containing the response from our server API and the passkeySigner
      */
     public func registerUser(userConfig: UserConfig) async -> String {
-        let registerInitResponse = (await myServer.registerInit(username: userConfig.email)).response
-        let fido2Attestation = try! await userConfig.passkeysSigner.register(challenge: registerInitResponse)
+        let registerInitResponse = (await self.myServer.registerInit(username: userConfig.email)).response
+        let fido2Attestation = try! await self.passkeysSigner.register(challenge: registerInitResponse)
         let signedChallenge = MyServer.SignedChallenge(firstFactorCredential: fido2Attestation)
-        let result = await myServer.registerComplete(signedChallenge: signedChallenge, temporaryAuthenticationToken: registerInitResponse.temporaryAuthenticationToken)
+        let result = await self.myServer.registerComplete(signedChallenge: signedChallenge, temporaryAuthenticationToken: registerInitResponse.temporaryAuthenticationToken)
 
         return result.rawJSON
     }
@@ -37,7 +39,7 @@ final class MyBusinessLogic: ObservableObject {
      - Returns: Tuple containing the response from our server API and the authToken to be used in Step 3.
      */
     public func delegatedLogin(email: String) async -> (rawJSON: String, authToken: String) {
-        let result = await myServer.login(username: email)
+        let result = await self.myServer.login(username: email)
         return (rawJSON: result.rawJSON, authToken: result.response.token)
     }
 
@@ -48,7 +50,7 @@ final class MyBusinessLogic: ObservableObject {
         - authToken: Authentication token retrieved in Step 2
      */
     public func listWallets(authToken: String) async -> (rawJSON: String, walletId: String) {
-        let result = await myServer.listWallets(authToken: authToken)
+        let result = await self.myServer.listWallets(authToken: authToken)
 
         let walletId = result.response.items[0].id
         return (rawJSON: result.rawJSON, walletId: walletId)
@@ -63,11 +65,11 @@ final class MyBusinessLogic: ObservableObject {
         - authToken: Authentication token retrieved in Step 2
         - passkeySigner: passkeys signer created in Step 1
      */
-    public func signMessage(message: String, walletId: String, authToken: String, passkeysSigner: PasskeysSigner) async -> String {
-        let initWalletResult = await myServer.initSignature(message: message, walletId: walletId, authToken: authToken)
-        let fido2Assertion = try! await passkeysSigner.sign(challenge: initWalletResult.response.challenge)
+    public func signMessage(message: String, walletId: String, authToken: String) async -> String {
+        let initWalletResult = await self.myServer.initSignature(message: message, walletId: walletId, authToken: authToken)
+        let fido2Assertion = try! await self.passkeysSigner.sign(challenge: initWalletResult.response.challenge)
         let userActionAssertion = DfnsApi.UserActionAssertion(challengeIdentifier: initWalletResult.response.challenge.challengeIdentifier, firstFactor: fido2Assertion)
-        let result = await myServer.completeSignature(walletId: walletId, authToken: authToken, requestBody: initWalletResult.response.requestBody, signedChallenge: userActionAssertion)
+        let result = await self.myServer.completeSignature(walletId: walletId, authToken: authToken, requestBody: initWalletResult.response.requestBody, signedChallenge: userActionAssertion)
 
         return result.rawJSON
     }

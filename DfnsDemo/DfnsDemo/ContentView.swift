@@ -170,7 +170,7 @@ struct EndUserWalletsView: View {
 
                     Button("Sign Message") {
                         Task {
-                            signingResponse = await myBusinessLogic.signMessage(message: messageToSign, walletId: walletId, authToken: userConfig.authToken!, passkeysSigner: userConfig.passkeysSigner)
+                            signingResponse = await myBusinessLogic.signMessage(message: messageToSign, walletId: walletId, authToken: userConfig.authToken!)
                         }
                     }.buttonStyle(.borderedProminent).frame(maxWidth: .infinity).padding(.vertical)
 

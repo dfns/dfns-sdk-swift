@@ -4,10 +4,8 @@ import SwiftUI
 class UserConfig: ObservableObject {
     init() {
         email = ""
-        passkeysSigner = PasskeysSigner(relyingPartyId: Config.passkeyRelyingPartyId)
     }
     @Published var authToken: String?
-    @Published var passkeysSigner: PasskeysSigner
     @Published var email: String
 }
 
