@@ -53,10 +53,10 @@ struct ContentView: View {
 
                     Text("Once logged in, the end users can use the wallets they own.")
 
-                    if userConfig.authToken != nil && userConfig.passkeysSigner != nil {
+                    if userConfig.authToken != nil {
                         NavigationLink("Go to Wallets", destination: EndUserWalletsView(userConfig: userConfig, myBusinessLogic: myBusinessLogic)).buttonStyle(.borderedProminent).padding(.vertical, 15)
                     } else {
-                        Text("⚠️ You need to complete step 1 and 2 first")
+                        Text("⚠️ You need to complete step 2 first")
                     }
 
                     Text("The end 🎉")
@@ -93,9 +93,8 @@ struct DelegatedRegistrationView: View {
 
                     Button("Register EndUser") {
                         Task {
-                            let result = await myBusinessLogic.registerUser(email: userConfig.email)
-                            userConfig.passkeysSigner = result.passkeysSigner
-                            registerResponse = result.rawJSON
+                            let result = await myBusinessLogic.registerUser(userConfig: userConfig)
+                            registerResponse = result
                         }
                     }.buttonStyle(.borderedProminent).frame(maxWidth: .infinity).padding(.bottom)
 
@@ -171,7 +170,7 @@ struct EndUserWalletsView: View {
 
                     Button("Sign Message") {
                         Task {
-                            signingResponse = await myBusinessLogic.signMessage(message: messageToSign, walletId: walletId, authToken: userConfig.authToken!, passkeysSigner: userConfig.passkeysSigner!)
+                            signingResponse = await myBusinessLogic.signMessage(message: messageToSign, walletId: walletId, authToken: userConfig.authToken!)
                         }
                     }.buttonStyle(.borderedProminent).frame(maxWidth: .infinity).padding(.vertical)
 
