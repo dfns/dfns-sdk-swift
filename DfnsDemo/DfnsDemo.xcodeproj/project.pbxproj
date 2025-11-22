@@ -3,17 +3,17 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 56;
+	objectVersion = 60;
 	objects = {
 
 /* Begin PBXBuildFile section */
+		48F0B3B02ED061F300500085 /* DfnsSdk in Frameworks */ = {isa = PBXBuildFile; productRef = 48F0B3AF2ED061F300500085 /* DfnsSdk */; };
 		7A1A68702BBEA54B00167ED0 /* DfnsDemoApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A1A686F2BBEA54B00167ED0 /* DfnsDemoApp.swift */; };
 		7A1A68722BBEA54B00167ED0 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A1A68712BBEA54B00167ED0 /* ContentView.swift */; };
 		7A1A68742BBEA54C00167ED0 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 7A1A68732BBEA54C00167ED0 /* Assets.xcassets */; };
 		7A1A68772BBEA54C00167ED0 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 7A1A68762BBEA54C00167ED0 /* Preview Assets.xcassets */; };
 		7A1A68A92BC5943700167ED0 /* MyServer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A1A68A82BC5943700167ED0 /* MyServer.swift */; };
 		7A439BB12BCD22710022D861 /* MyBusinessLogic.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A439BB02BCD22710022D861 /* MyBusinessLogic.swift */; };
-		7A439BB72BCD67270022D861 /* DfnsSdk in Frameworks */ = {isa = PBXBuildFile; productRef = 7A439BB62BCD67270022D861 /* DfnsSdk */; };
 		7A5207E72BCD8B22003EC637 /* Config.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A5207E62BCD8B22003EC637 /* Config.swift */; };
 /* End PBXBuildFile section */
 
@@ -34,7 +34,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				7A439BB72BCD67270022D861 /* DfnsSdk in Frameworks */,
+				48F0B3B02ED061F300500085 /* DfnsSdk in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -97,7 +97,7 @@
 			);
 			name = DfnsDemo;
 			packageProductDependencies = (
-				7A439BB62BCD67270022D861 /* DfnsSdk */,
+				48F0B3AF2ED061F300500085 /* DfnsSdk */,
 			);
 			productName = DfnsDemo;
 			productReference = 7A1A686C2BBEA54B00167ED0 /* DfnsDemo.app */;
@@ -128,7 +128,7 @@
 			);
 			mainGroup = 7A1A68632BBEA54B00167ED0;
 			packageReferences = (
-				7A439BB52BCD67270022D861 /* XCRemoteSwiftPackageReference "dfns-sdk-swift" */,
+				48F0B3AE2ED061F300500085 /* XCLocalSwiftPackageReference "../../dfns-sdk-swift" */,
 			);
 			productRefGroup = 7A1A686D2BBEA54B00167ED0 /* Products */;
 			projectDirPath = "";
@@ -227,6 +227,7 @@
 				SDKROOT = iphoneos;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
 			};
 			name = Debug;
 		};
@@ -282,6 +283,7 @@
 				MTL_FAST_MATH = YES;
 				SDKROOT = iphoneos;
 				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_VERSION = 5.0;
 				VALIDATE_PRODUCT = YES;
 			};
 			name = Release;
@@ -313,7 +315,6 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Debug;
@@ -345,7 +346,6 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Release;
@@ -373,21 +373,16 @@
 		};
 /* End XCConfigurationList section */
 
-/* Begin XCRemoteSwiftPackageReference section */
-		7A439BB52BCD67270022D861 /* XCRemoteSwiftPackageReference "dfns-sdk-swift" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/dfns/dfns-sdk-swift";
-			requirement = {
-				branch = m;
-				kind = branch;
-			};
+/* Begin XCLocalSwiftPackageReference section */
+		48F0B3AE2ED061F300500085 /* XCLocalSwiftPackageReference "../../dfns-sdk-swift" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = "../../dfns-sdk-swift";
 		};
-/* End XCRemoteSwiftPackageReference section */
+/* End XCLocalSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		7A439BB62BCD67270022D861 /* DfnsSdk */ = {
+		48F0B3AF2ED061F300500085 /* DfnsSdk */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = 7A439BB52BCD67270022D861 /* XCRemoteSwiftPackageReference "dfns-sdk-swift" */;
 			productName = DfnsSdk;
 		};
 /* End XCSwiftPackageProductDependency section */

@@ -10,7 +10,7 @@ class PasskeyDelegate: NSObject, ASAuthorizationControllerDelegate, ASAuthorizat
   private var _completion: (_ error: Error?, _ result: PassKeyResult?) -> Void;
   
   // Initializes delegate with a completion handler (callback function)
-  init(completionHandler: @escaping (_ error: Error?, _ result: PassKeyResult?) -> Void) {
+  init(completionHandler: @escaping @Sendable (_ error: Error?, _ result: PassKeyResult?) -> Void) {
     self._completion = completionHandler;
   }
   

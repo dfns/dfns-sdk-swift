@@ -1,4 +1,4 @@
-import DfnsSdk
+@preconcurrency import DfnsSdk
 import SwiftUI
 
 class UserConfig: ObservableObject {
