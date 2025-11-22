@@ -41,19 +41,26 @@ public final class PasskeysSigner {
 		let displayName = challenge.user.displayName
 		let challengeBase64url = Utils.base64URLUnescaped(challenge.challenge)
 		
-		passkey.register(self.relyingPartyId, challenge: challengeBase64url, displayName: displayName, userId: userId, securityKey: false,
-						 resolve: { authResult in
-			let credentialInfo = DfnsApi.Fido2AttestationData(
-				attestationData: self.extractFromAuthResultValue(authResult, path: ["response", "rawAttestationObject"]),
-				clientData: self.extractFromAuthResultValue(authResult, path: ["response", "rawClientDataJSON"]),
-				credId: self.extractFromAuthResultValue(authResult, path: ["credentialID"])
-			)
-			let fido2Attestation = DfnsApi.Fido2Attestation(credentialInfo: credentialInfo, credentialKind: "Fido2")
-			completion(.success(fido2Attestation))
-		}, reject: { code, message, error in
-			let exception = PasskeysSignerError.unexpected(code: code, message: message, error: error)
-			completion(.failure(exception))
-		})
+		passkey.register(
+			self.relyingPartyId,
+			challenge: challengeBase64url,
+			displayName: displayName,
+			userId: userId,
+			securityKey: false,
+			resolve: { authResult in
+				let credentialInfo = DfnsApi.Fido2AttestationData(
+					attestationData: self.extractFromAuthResultValue(authResult, path: ["response", "rawAttestationObject"]),
+					clientData: self.extractFromAuthResultValue(authResult, path: ["response", "rawClientDataJSON"]),
+					credId: self.extractFromAuthResultValue(authResult, path: ["credentialID"])
+				)
+				let fido2Attestation = DfnsApi.Fido2Attestation(credentialInfo: credentialInfo, credentialKind: "Fido2")
+				completion(.success(fido2Attestation))
+			},
+			reject: { code, message, error in
+				let exception = PasskeysSignerError.unexpected(code: code, message: message, error: error)
+				completion(.failure(exception))
+			}
+		)
 	}
 	
 	public func sign(challenge: DfnsApi.UserActionChallenge) async throws -> DfnsApi.Fido2Assertion {
