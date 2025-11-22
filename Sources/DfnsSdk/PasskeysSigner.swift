@@ -26,20 +26,17 @@ public final class PasskeysSigner {
 	}
 	
 	public func register(challenge: DfnsApi.UserRegistrationChallenge) async throws -> DfnsApi.Fido2Attestation {
-		let result = await withCheckedContinuation { continuation in
-			register(challenge: challenge) { fido2Attestation, exception in
-				continuation.resume(returning: (fido2Attestation: fido2Attestation, exception: exception))
+		try await withCheckedThrowingContinuation { continuation in
+			register(challenge: challenge) { result in
+				continuation.resume(with: result)
 			}
 		}
-		
-		if result.exception != nil {
-			throw result.exception!
-		}
-		
-		return result.fido2Attestation!
 	}
 	
-	private func register(challenge: DfnsApi.UserRegistrationChallenge, completion: @escaping (DfnsApi.Fido2Attestation?, Error?) -> Void) {
+	private func register(
+		challenge: DfnsApi.UserRegistrationChallenge,
+		completion: @escaping (Result<DfnsApi.Fido2Attestation, Error>) -> Void
+	) {
 		let userId = challenge.user.id
 		let displayName = challenge.user.displayName
 		let challengeBase64url = Utils.base64URLUnescaped(challenge.challenge)
@@ -52,29 +49,25 @@ public final class PasskeysSigner {
 				credId: self.extractFromAuthResultValue(authResult, path: ["credentialID"])
 			)
 			let fido2Attestation = DfnsApi.Fido2Attestation(credentialInfo: credentialInfo, credentialKind: "Fido2")
-			completion(fido2Attestation, nil)
+			completion(.success(fido2Attestation))
 		}, reject: { code, message, error in
 			let exception = PasskeysSignerError.unexpected(code: code, message: message, error: error)
-			completion(nil, exception)
+			completion(.failure(exception))
 		})
 	}
 	
 	public func sign(challenge: DfnsApi.UserActionChallenge) async throws -> DfnsApi.Fido2Assertion {
-		let result = await withCheckedContinuation { continuation in
-			sign(challenge: challenge) { fido2Assertion, exception in
-				continuation.resume(returning: (fido2Assertion: fido2Assertion, exception: exception))
+		try await withCheckedThrowingContinuation { continuation in
+			sign(challenge: challenge) { result in
+				continuation.resume(with: result)
 			}
 		}
-		
-		if result.exception != nil {
-			throw result.exception!
-		}
-		
-		return result.fido2Assertion!
-		
 	}
 	
-	private func sign(challenge: DfnsApi.UserActionChallenge, completion: @escaping (DfnsApi.Fido2Assertion?, Error?) -> Void) {
+	private func sign(
+		challenge: DfnsApi.UserActionChallenge,
+		completion: @escaping (Result<DfnsApi.Fido2Assertion, Error>) -> Void
+	) {
 		let challengeBase64url = Utils.base64URLUnescaped(challenge.challenge)
 		
 		passkey.authenticate(self.relyingPartyId, challenge: challengeBase64url, securityKey: false, resolve: { authResult in
@@ -88,10 +81,10 @@ public final class PasskeysSigner {
 			
 			let fido2Assertion = DfnsApi.Fido2Assertion(kind: "Fido2", credentialAssertion: credentialAssertion)
 			
-			completion(fido2Assertion, nil)
+			completion(.success(fido2Assertion))
 		}, reject: { code, message, error in
 			let exception = PasskeysSignerError.unexpected(code: code, message: message, error: error)
-			completion(nil, exception)
+			completion(.failure(exception))
 		})
 	}
 	
