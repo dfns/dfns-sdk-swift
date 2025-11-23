@@ -1,8 +1,8 @@
 import SwiftUI
 
 struct ContentView: View {
-    @ObservedObject var userConfig: UserConfig
-    @ObservedObject var myBusinessLogic: MyBusinessLogic
+    @Binding var userConfig: UserConfig
+    let myBusinessLogic: MyBusinessLogic
 
     var body: some View {
         NavigationView {
@@ -31,7 +31,7 @@ struct ContentView: View {
 
                     Text("Your customers, either new or existing, must register with Dfns first and have credential(s) in our system in order to own and be able to interact with their blockchain wallets.\n\nThe delegated registration flow allows you to initiate and and complete the registration process on your customers behalf, without them being aware that the wallets infrastructure is powered by Dfns, i.e. they will not receive an registration email from Dfns directly unlike the normal registration process for your employees. Their WebAuthn credentials are still completely under their control.")
 
-                    NavigationLink("Go to Delegated Registration", destination: DelegatedRegistrationView(userConfig: userConfig, myBusinessLogic: myBusinessLogic)).buttonStyle(.borderedProminent).padding(.vertical, 15)
+                    NavigationLink("Go to Delegated Registration", destination: DelegatedRegistrationView(userConfig: $userConfig, myBusinessLogic: myBusinessLogic)).buttonStyle(.borderedProminent).padding(.vertical, 15)
 
                     /// STEP 2
 
@@ -42,7 +42,7 @@ struct ContentView: View {
 
                     Text("The delegated signing flow does not need the end user sign with the WebAuthn credential. The login can be performed on the server side transparent to the end users and obtain a readonly auth token. For example, your server can choose to automatically login the end users upon the completion of delegated registration. In this tutorial, this step is shown as explicit in order to more clearly demonstrate how the interaction works.")
 
-                    NavigationLink("Go to Delegated Login", destination: DelegatedLoginView(userConfig: userConfig, myBusinessLogic: myBusinessLogic)).buttonStyle(.borderedProminent).padding(.vertical, 15)
+                    NavigationLink("Go to Delegated Login", destination: DelegatedLoginView(userConfig: $userConfig, myBusinessLogic: myBusinessLogic)).buttonStyle(.borderedProminent).padding(.vertical, 15)
 
                     /// STEP 3
 
@@ -69,8 +69,8 @@ struct ContentView: View {
 }
 
 struct DelegatedRegistrationView: View {
-    @ObservedObject var userConfig: UserConfig
-    @ObservedObject var myBusinessLogic: MyBusinessLogic
+	@Binding var userConfig: UserConfig
+	let myBusinessLogic: MyBusinessLogic
     @State var registerResponse: String = ""
 
     var body: some View {
@@ -90,13 +90,20 @@ struct DelegatedRegistrationView: View {
                         .frame(maxWidth: .infinity, alignment: .leading)
 
                     TextField("Choose a username", text: $userConfig.email).textFieldStyle(.roundedBorder).padding(.vertical)
+						.textFieldStyle(.roundedBorder)
+						.padding(.vertical)
+						.keyboardType(.emailAddress)
+						.textInputAutocapitalization(.never)
 
                     Button("Register EndUser") {
                         Task {
                             let result = await myBusinessLogic.registerUser(userConfig: userConfig)
                             registerResponse = result
                         }
-                    }.buttonStyle(.borderedProminent).frame(maxWidth: .infinity).padding(.bottom)
+					}
+					.buttonStyle(.borderedProminent)
+					.frame(maxWidth: .infinity)
+					.padding(.bottom)
 
                     JSONText(registerResponse)
                 }.padding()
@@ -106,8 +113,8 @@ struct DelegatedRegistrationView: View {
 }
 
 struct DelegatedLoginView: View {
-    @ObservedObject var userConfig: UserConfig
-    @ObservedObject var myBusinessLogic: MyBusinessLogic
+    @Binding var userConfig: UserConfig
+    let myBusinessLogic: MyBusinessLogic
     @State var loginResponse: String = ""
 
     var body: some View {
@@ -123,7 +130,10 @@ struct DelegatedLoginView: View {
 
                     Text("This auth token is readonly and needs to be cached and passed along with all requests interacting with the Dfns API. To clearly demonstrate all the necessary components for each step, this example will cache the auth token in the application context and send it back with every sequently request to the server. You should however choose a more secure caching method.").padding(.vertical)
 
-                    TextField("Enter the username", text: $userConfig.email).textFieldStyle(.roundedBorder)
+                    TextField("Enter the username", text: $userConfig.email)
+						.textFieldStyle(.roundedBorder)
+						.keyboardType(.emailAddress)
+						.textInputAutocapitalization(.never)
 
                     Button("Login EndUser") {
                         Task {
@@ -142,8 +152,8 @@ struct DelegatedLoginView: View {
 }
 
 struct EndUserWalletsView: View {
-    @ObservedObject var userConfig: UserConfig
-    @ObservedObject var myBusinessLogic: MyBusinessLogic
+    let userConfig: UserConfig
+    let myBusinessLogic: MyBusinessLogic
     @State var walletResponse: String = ""
     @State var messageToSign: String = ""
     @State var signingResponse: String = ""

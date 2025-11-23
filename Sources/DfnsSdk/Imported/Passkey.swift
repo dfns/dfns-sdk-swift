@@ -163,28 +163,28 @@ enum PassKeyError: String, Error {
   case unknown = "UnknownError"
 }
 
-struct AuthRegistrationResult {
+struct AuthRegistrationResult: Sendable {
   var passkey: PassKeyRegistrationResult
   var type: PasskeyOperation
 }
 
-struct AuthAssertionResult {
+struct AuthAssertionResult: Sendable {
   var passkey: PassKeyAssertionResult
   var type: PasskeyOperation
 }
 
-struct PassKeyResult {
+struct PassKeyResult: Sendable {
   var registrationResult: PassKeyRegistrationResult?
   var assertionResult: PassKeyAssertionResult?
 }
 
-struct PassKeyRegistrationResult {
+struct PassKeyRegistrationResult: Sendable {
   var credentialID: Data
   var rawAttestationObject: Data
   var rawClientDataJSON: Data
 }
 
-struct PassKeyAssertionResult {
+struct PassKeyAssertionResult: Sendable {
   var credentialID: Data
   var rawAuthenticatorData: Data
   var rawClientDataJSON: Data
@@ -192,7 +192,7 @@ struct PassKeyAssertionResult {
   var userID: Data
 }
 
-enum PasskeyOperation {
+enum PasskeyOperation: Sendable {
   case Registration
   case Assertion
 }
