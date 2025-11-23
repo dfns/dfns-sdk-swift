@@ -10,6 +10,7 @@ public enum PasskeysSignerError: Error {
  Wrapper class for the Passkey class imported from the `react-native-passkey library`
  Converts completion handlers into async functions and make the necessary conversion to work with Dfns API
  */
+@MainActor
 public final class PasskeysSigner {
 	private let passkey = Passkey()
 	

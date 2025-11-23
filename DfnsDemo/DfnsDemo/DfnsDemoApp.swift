@@ -1,25 +1,29 @@
-@preconcurrency import DfnsSdk
+import DfnsSdk
 import SwiftUI
+import Observation
 
-class UserConfig: ObservableObject {
+@Observable
+final class UserConfig {
+	var authToken: String?
+	var email: String
+	
     init() {
-        email = ""
+		email = ""
     }
-    @Published var authToken: String?
-    @Published var email: String
+
 }
 
 @main
 struct DfnsDemoApp: App {
-    @StateObject private var userConfig = UserConfig()
-    @StateObject private var myBusinessLogic = MyBusinessLogic(
+    @State private var userConfig = UserConfig()
+    @State private var myBusinessLogic = MyBusinessLogic(
         url: Config.serverUrl,
         passkeyRelyingPartyId: Config.passkeyRelyingPartyId
     )
 
     var body: some Scene {
         WindowGroup {
-            ContentView(userConfig: userConfig, myBusinessLogic: myBusinessLogic)
+			ContentView(userConfig: $userConfig, myBusinessLogic: myBusinessLogic)
         }
     }
 }

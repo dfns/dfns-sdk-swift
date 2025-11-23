@@ -1,11 +1,12 @@
-@preconcurrency import DfnsSdk
+import DfnsSdk
 import Foundation
 
 /**
     Implement the API of the server
  */
-final class MyServer {
-    private var url: String = ""
+@MainActor
+final class MyServer: @unchecked Sendable {
+    private let url: String
 
     init(url: String) {
         self.url = url

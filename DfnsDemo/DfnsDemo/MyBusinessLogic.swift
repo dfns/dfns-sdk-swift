@@ -1,13 +1,16 @@
-@preconcurrency import DfnsSdk
+import DfnsSdk
 import Foundation
+import Observation
 
 /**
     Controller that is doing the interface between the UI, the Demo Server and the Passkey Signer
  */
-final class MyBusinessLogic: ObservableObject {
+@Observable
+@MainActor
+final class MyBusinessLogic: @unchecked Sendable {
     private var passkeyRelyingPartyId: String
-    private var myServer: MyServer
-    private var passkeysSigner: PasskeysSigner
+    private let myServer: MyServer
+    private let passkeysSigner: PasskeysSigner
 
     init(url: String, passkeyRelyingPartyId: String) {
         self.passkeyRelyingPartyId = passkeyRelyingPartyId
