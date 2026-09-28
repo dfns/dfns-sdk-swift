@@ -12,7 +12,7 @@ final class MyBusinessLogic: ObservableObject {
     init(url: String, passkeyRelyingPartyId: String) {
         self.passkeyRelyingPartyId = passkeyRelyingPartyId
         self.myServer = MyServer(url: url)
-        self.passkeysSigner = PasskeysSigner(relyingPartyId: passkeyRelyingPartyId)
+        self.passkeysSigner = try! PasskeysSigner(relyingParty: DfnsApi.RelyingParty(id: passkeyRelyingPartyId, name: "Dfns Demo"))
     }
 
     /**
@@ -24,7 +24,7 @@ final class MyBusinessLogic: ObservableObject {
      */
     public func registerUser(userConfig: UserConfig) async -> String {
         let registerInitResponse = (await self.myServer.registerInit(username: userConfig.email)).response
-        let fido2Attestation = try! await self.passkeysSigner.register(challenge: registerInitResponse)
+        let fido2Attestation = try! await self.passkeysSigner.create(challenge: registerInitResponse)
         let signedChallenge = MyServer.SignedChallenge(firstFactorCredential: fido2Attestation)
         let result = await self.myServer.registerComplete(signedChallenge: signedChallenge, temporaryAuthenticationToken: registerInitResponse.temporaryAuthenticationToken)
 

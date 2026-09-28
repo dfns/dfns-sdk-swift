@@ -4,6 +4,9 @@
 
 import Foundation
 import AuthenticationServices
+#if canImport(UIKit)
+import UIKit
+#endif
 
 @objc(PasskeyDelegate)
 class PasskeyDelegate: NSObject, ASAuthorizationControllerDelegate, ASAuthorizationControllerPresentationContextProviding {
@@ -25,7 +28,13 @@ class PasskeyDelegate: NSObject, ASAuthorizationControllerDelegate, ASAuthorizat
   
   @available(iOS 13.0, *)
   func presentationAnchor(for controller: ASAuthorizationController) -> ASPresentationAnchor {
+    #if canImport(UIKit)
     return UIApplication.shared.keyWindow!;
+    #else
+    // Passkeys are only exercised on UIKit platforms (iOS). This anchor exists so the module
+    // compiles on macOS for host-based unit testing; it is never used at runtime there.
+    return ASPresentationAnchor();
+    #endif
   }
   
   @available(iOS 13.0, *)

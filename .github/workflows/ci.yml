@@ -1,0 +1,29 @@
+name: CI
+
+on:
+  push:
+    branches: [m]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Build & test
+    runs-on: macos-15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Swift version
+        run: swift --version
+
+      # Builds the macOS slice and runs the unit tests (Utils + DfnsApi Codable).
+      - name: Run unit tests
+        run: swift test
+
+      # Compile check against the real iOS target so UIKit/AuthenticationServices paths stay green.
+      - name: Build for iOS Simulator
+        run: xcodebuild build -scheme DfnsSdk -destination 'generic/platform=iOS Simulator'

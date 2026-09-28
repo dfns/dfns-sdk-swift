@@ -27,13 +27,13 @@ This request signature serves as cryptographic proof that only authorized entiti
 While implementing an iOS application your backend server will have to communicate with the DFNS API to retrieve this challenge and pass it to your application, `PasskeySigner` will be used to register and authenticate a user.
 
 ```
-let passkeysSigner = PasskeysSigner()
+let passkeysSigner = try PasskeysSigner(relyingParty: DfnsApi.RelyingParty(id: "acme.com", name: "Acme"))
 ```
 
-#### Register
+#### Create
 
 ```
-let fido2Attestation = try! await passkeysSigner.register(challenge: challenge)
+let fido2Attestation = try! await passkeysSigner.create(challenge: challenge)
 ```
 
 #### Sign
