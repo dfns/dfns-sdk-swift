@@ -11,6 +11,13 @@ Welcome, builders 👋🔑 This repo holds Dfns Swift SDK. Useful links:
 
 This means that while we've worked hard to ensure its functionality there may still be bugs, performance issues, or unexpected behavior.
 
+## Requirements
+
+- **iOS 15.0 or later.** The SDK relies on Apple's passkey APIs (`ASAuthorizationPlatformPublicKeyCredentialProvider`), introduced in iOS 15. On earlier versions, registration and signing fail with a `NotSupported` error. On iOS 15 passkeys were a developer preview (behind the "Syncing Platform Authenticator" setting); they are enabled by default from **iOS 16**, which is the practical minimum for production use.
+- **Device passcode set.** The device must have a passcode (with Face ID or Touch ID where available), and iCloud Keychain enabled — iOS prompts the user to enable it on first passkey creation.
+- **Associated Domains entitlement.** Your app must declare the `webcredentials:your-domain.com` associated domain, and the relying-party domain must serve a matching `apple-app-site-association` file.
+- **Hardware security keys** (e.g. YubiKey) are supported as an alternative to platform passkeys, also from iOS 15.
+
 ## Installation
 
 `File` > `Add Packages Dependencies` > `Search or Enter Package URL` > `https://github.com/dfns/dfns-sdk-swift`
