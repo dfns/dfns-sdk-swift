@@ -7,7 +7,8 @@ Welcome, builders 👋🔑 This repo holds Dfns Swift SDK. Useful links:
 
 ## BETA Warning
 
-:warning: **Attention: This project is currently in BETA.**
+> [!CAUTION] 
+> **This project is currently in BETA.**
 
 This means that while we've worked hard to ensure its functionality there may still be bugs, performance issues, or unexpected behavior.
 
@@ -48,24 +49,20 @@ A demo application using the SDK can be found [here](https://github.com/dfns/dfn
 
 #### Prerequisites
 
-To run the demo application on an iOS device, you must have an `Application` for iOS. To create a new `Application`, go to `Dfns Dashboard` > `Settings` > `Org Settings` > `Applications` > `New Application`, and enter the following information
-
-- Name, choose any name, for example `Dfns Tutorial iOS`
-- Application Type, leave as the default `Default Application`
-- Relying Party, set to the domain you associated with the app, e.g. `panda-new-kit.ngrok-free.app`
-- Origin, set to the full url of the domain, e.g. `https://panda-new-kit.ngrok-free.app`
-
-After the `Application` is created, copy and save the `App ID`, e.g. `ap-39abb-5nrrm-9k59k0u3jup3vivo`.
+You need a `Service Account`. To create a new `Service Account`, first [generate a keypair](https://docs.dfns.co/dfns-docs/advanced-topics/authentication/credentials/generate-a-key-pair), then go to `Dfns Dashboard` > `Settings` > `Service Accounts` > `New Service Account`. Follow the [guide here](https://github.com/dfns/dfns-sdk-ts/tree/m/examples/sdk/auth-delegated#server-backend).
 
 #### Configuration
 
 In the `./DfnsDemo/DfnsDemo/Config.swift` set the following values,
 
-- `url` = either `http://localhost:8000` or if using ngrok, the public url `https://panda-new-kit.ngrok-free.app`
+- `url` = either `http://localhost:8000` or if using *ngrok*, the public url (e.g. `https://airedale-finer-baboon.ngrok-free.app`, your *ngrok* url might end with `".dev"`, that is fine too).
+
+> [!NOTE]
+> If you are using *ngrok* you might also need to add the url (e.g. `https://airedale-finer-baboon.ngrok-free.app`) in `Dfns Dashboard` > `Settings` > `Organization` > `Webauthn Relying Party` > `Whitelisted Passkey Domains (Relying Party ID)`.
 
 #### Modify associated domain entitlement
 
-For iOS to download the correct `apple-app-site-association` file, you need to modify the associated domain entitlement configuration to point to the right location. Open the file `./DfnsDemo/DfnsDemo/DfnsDemo.entitlements` and change the string value `webcredentials:panda-new-kit.ngrok-free.app?mode=developer` to match your domain.
+For iOS to download the correct `apple-app-site-association` file, you need to modify the associated domain entitlement configuration to point to the right location. Open the file `./DfnsDemo/DfnsDemo/DfnsDemo.entitlements` and change the string value `webcredentials:airedale-finer-baboon.ngrok-free.app?mode=developer` to match your domain.
 
 #### Team Id
 
