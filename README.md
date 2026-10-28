@@ -5,12 +5,6 @@ Welcome, builders 👋🔑 This repo holds Dfns Swift SDK. Useful links:
 - [Dfns Website](https://www.dfns.co)
 - [Dfns API Docs](https://docs.dfns.co)
 
-## BETA Warning
-
-:warning: **Attention: This project is currently in BETA.**
-
-This means that while we've worked hard to ensure its functionality there may still be bugs, performance issues, or unexpected behavior.
-
 ## Installation
 
 `File` > `Add Packages Dependencies` > `Search or Enter Package URL` > `https://github.com/dfns/dfns-sdk-swift`
