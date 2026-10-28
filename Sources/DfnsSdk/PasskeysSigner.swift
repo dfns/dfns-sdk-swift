@@ -95,8 +95,9 @@ public final class PasskeysSigner {
 
     private func sign(challenge: DfnsApi.UserActionChallenge, completion: @escaping (DfnsApi.Fido2Assertion?, Error?) -> Void) {
         let challengeBase64url = Utils.base64URLUnescaped(challenge.challenge)
+        let allowedCredentials = PasskeysSigner.allowedCredentialIds(challenge)
 
-        passkey.authenticate(self.relyingParty.id, challenge: challengeBase64url, securityKey: false, resolve: { authResult in
+        passkey.authenticate(self.relyingParty.id, challenge: challengeBase64url, securityKey: false, allowedCredentials: allowedCredentials, resolve: { authResult in
             let credentialAssertion = DfnsApi.Fido2AssertionData(
                 clientData: self.extractFromAuthResultValue(authResult, path: ["response", "rawClientDataJSON"]),
                 credId: self.extractFromAuthResultValue(authResult, path: ["credentialID"]),
@@ -112,6 +113,12 @@ public final class PasskeysSigner {
             let exception = PasskeysSignerError.unexpected(code: code, message: message, error: error)
             completion(nil, exception)
         })
+    }
+
+    /// Raw IDs of the WebAuthn credentials the challenge allows, so the platform only offers those
+    /// passkeys. An empty list leaves the request unrestricted.
+    static func allowedCredentialIds(_ challenge: DfnsApi.UserActionChallenge) -> [Data] {
+        return challenge.allowCredentials.webauthn.compactMap { Data(base64Encoded: Utils.base64URLUnescaped($0.id)) }
     }
 
     private func extractFromAuthResultValue(_ authResult: NSDictionary, path: [String]) -> String {

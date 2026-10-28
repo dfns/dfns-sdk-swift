@@ -73,8 +73,8 @@ class Passkey: NSObject {
     }
   }
 
-  @objc(authenticate:withChallenge:withSecurityKey:withResolver:withRejecter:)
-  func authenticate(_ identifier: String, challenge: String, securityKey: Bool, resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) -> Void {
+  @objc(authenticate:withChallenge:withSecurityKey:withAllowedCredentials:withResolver:withRejecter:)
+  func authenticate(_ identifier: String, challenge: String, securityKey: Bool, allowedCredentials: [Data], resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) -> Void {
 
     // Convert challenge to correct type
     guard let challengeData: Data = Data(base64Encoded: challenge) else {
@@ -91,11 +91,19 @@ class Passkey: NSObject {
         // Create a new assertion request with security key
         let securityKeyProvider = ASAuthorizationSecurityKeyPublicKeyCredentialProvider(relyingPartyIdentifier: identifier);
         let authRequest = securityKeyProvider.createCredentialAssertionRequest(challenge: challengeData);
+        // Restrict the assertion to the credentials allowed by the challenge (DFNS addition)
+        authRequest.allowedCredentials = allowedCredentials.map {
+          ASAuthorizationSecurityKeyPublicKeyCredentialDescriptor(credentialID: $0, transports: ASAuthorizationSecurityKeyPublicKeyCredentialDescriptor.Transport.allSupported)
+        };
         authController = ASAuthorizationController(authorizationRequests: [authRequest]);
       } else {
         // Create a new assertion request without security key
         let platformProvider = ASAuthorizationPlatformPublicKeyCredentialProvider(relyingPartyIdentifier: identifier);
         let authRequest = platformProvider.createCredentialAssertionRequest(challenge: challengeData);
+        // Restrict the assertion to the credentials allowed by the challenge (DFNS addition)
+        authRequest.allowedCredentials = allowedCredentials.map {
+          ASAuthorizationPlatformPublicKeyCredentialDescriptor(credentialID: $0)
+        };
         authController = ASAuthorizationController(authorizationRequests: [authRequest]);
       }
 
