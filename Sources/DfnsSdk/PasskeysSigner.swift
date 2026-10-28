@@ -10,7 +10,7 @@ public enum PasskeysSignerError: Error {
  Wrapper class for the Passkey class imported from the `react-native-passkey library`
  Converts completion handlers into async functions and make the necessary conversion to work with Dfns API
  */
-public final class PasskeysSigner {
+public final class PasskeysSigner: Sendable {
     private let passkey = Passkey()
 
     /// Default timeout (ms) for credential operations, matching the other DFNS frontend SDKs.
@@ -38,80 +38,65 @@ public final class PasskeysSigner {
     }
 
     public func create(challenge: DfnsApi.UserRegistrationChallenge) async throws -> DfnsApi.Fido2Attestation {
-        if #available(macOS 10.15, iOS 13.0, watchOS 6.0, tvOS 13.0, *) {
-            let result = await withCheckedContinuation { continuation in
-                create(challenge: challenge) { fido2Attestation, exception in
-                    continuation.resume(returning: (fido2Attestation: fido2Attestation, exception: exception))
-                }
-            }
-
-            if result.exception != nil {
-                throw result.exception!
-            }
-
-            return result.fido2Attestation!
-        } else {
-            throw PasskeysSignerError.unexpected(code: PassKeyError.notSupported.rawValue, message: PassKeyError.notSupported.rawValue, error: nil)
-        }
+        try await register(challenge: challenge)
     }
 
-    private func create(challenge: DfnsApi.UserRegistrationChallenge, completion: @escaping (DfnsApi.Fido2Attestation?, Error?) -> Void) {
+    // AuthenticationServices must be driven from the main thread, so the passkey request runs on the main actor.
+    @MainActor
+    private func register(challenge: DfnsApi.UserRegistrationChallenge) async throws -> DfnsApi.Fido2Attestation {
         let userId = challenge.user.id
         let displayName = challenge.user.displayName
         let challengeBase64url = Utils.base64URLUnescaped(challenge.challenge)
 
-        passkey.register(self.relyingParty.id, challenge: challengeBase64url, displayName: displayName, userId: userId, securityKey: false,
-                         resolve: { authResult in
-                             let credentialInfo = DfnsApi.Fido2AttestationData(
-                                 attestationData: self.extractFromAuthResultValue(authResult, path: ["response", "rawAttestationObject"]),
-                                 clientData: self.extractFromAuthResultValue(authResult, path: ["response", "rawClientDataJSON"]),
-                                 credId: self.extractFromAuthResultValue(authResult, path: ["credentialID"])
-                             )
-                             let fido2Attestation = DfnsApi.Fido2Attestation(credentialInfo: credentialInfo, credentialKind: "Fido2")
-                             completion(fido2Attestation, nil)
-                         }, reject: { code, message, error in
-                             let exception = PasskeysSignerError.unexpected(code: code, message: message, error: error)
-                             completion(nil, exception)
-                         })
-    }
-
-    public func sign(challenge: DfnsApi.UserActionChallenge) async throws -> DfnsApi.Fido2Assertion {
-        if #available(macOS 10.15, iOS 13.0, watchOS 6.0, tvOS 13.0, *) {
-            let result = await withCheckedContinuation { continuation in
-                sign(challenge: challenge) { fido2Assertion, exception in
-                    continuation.resume(returning: (fido2Assertion: fido2Assertion, exception: exception))
-                }
-            }
-
-            if result.exception != nil {
-                throw result.exception!
-            }
-
-            return result.fido2Assertion!
-        } else {
-            throw PasskeysSignerError.unexpected(code: PassKeyError.notSupported.rawValue, message: PassKeyError.notSupported.rawValue, error: nil)
+        return try await withCheckedThrowingContinuation { continuation in
+            passkey.register(self.relyingParty.id, challenge: challengeBase64url, displayName: displayName, userId: userId, securityKey: false,
+                             resolve: { authResult in
+                                 let credentialInfo = DfnsApi.Fido2AttestationData(
+                                     attestationData: self.extractFromAuthResultValue(authResult, path: ["response", "rawAttestationObject"]),
+                                     clientData: self.extractFromAuthResultValue(authResult, path: ["response", "rawClientDataJSON"]),
+                                     credId: self.extractFromAuthResultValue(authResult, path: ["credentialID"])
+                                 )
+                                 let fido2Attestation = DfnsApi.Fido2Attestation(credentialInfo: credentialInfo, credentialKind: "Fido2")
+                                 continuation.resume(returning: fido2Attestation)
+                             }, reject: { code, message, error in
+                                 continuation.resume(throwing: PasskeysSignerError.unexpected(code: code, message: message, error: error))
+                             })
         }
     }
 
-    private func sign(challenge: DfnsApi.UserActionChallenge, completion: @escaping (DfnsApi.Fido2Assertion?, Error?) -> Void) {
+    public func sign(challenge: DfnsApi.UserActionChallenge) async throws -> DfnsApi.Fido2Assertion {
+        try await authenticate(challenge: challenge)
+    }
+
+    // AuthenticationServices must be driven from the main thread, so the passkey request runs on the main actor.
+    @MainActor
+    private func authenticate(challenge: DfnsApi.UserActionChallenge) async throws -> DfnsApi.Fido2Assertion {
         let challengeBase64url = Utils.base64URLUnescaped(challenge.challenge)
+        let allowedCredentials = PasskeysSigner.allowedCredentialIds(challenge)
 
-        passkey.authenticate(self.relyingParty.id, challenge: challengeBase64url, securityKey: false, resolve: { authResult in
-            let credentialAssertion = DfnsApi.Fido2AssertionData(
-                clientData: self.extractFromAuthResultValue(authResult, path: ["response", "rawClientDataJSON"]),
-                credId: self.extractFromAuthResultValue(authResult, path: ["credentialID"]),
-                signature: self.extractFromAuthResultValue(authResult, path: ["response", "signature"]),
-                authenticatorData: self.extractFromAuthResultValue(authResult, path: ["response", "rawAuthenticatorData"]),
-                userHandle: Utils.base64URLEscape((authResult["userID"] as! String).data(using: .utf8)!.base64EncodedString())
-            )
+        return try await withCheckedThrowingContinuation { continuation in
+            passkey.authenticate(self.relyingParty.id, challenge: challengeBase64url, securityKey: false, allowedCredentials: allowedCredentials, resolve: { authResult in
+                let credentialAssertion = DfnsApi.Fido2AssertionData(
+                    clientData: self.extractFromAuthResultValue(authResult, path: ["response", "rawClientDataJSON"]),
+                    credId: self.extractFromAuthResultValue(authResult, path: ["credentialID"]),
+                    signature: self.extractFromAuthResultValue(authResult, path: ["response", "signature"]),
+                    authenticatorData: self.extractFromAuthResultValue(authResult, path: ["response", "rawAuthenticatorData"]),
+                    userHandle: Utils.base64URLEscape((authResult["userID"] as! String).data(using: .utf8)!.base64EncodedString())
+                )
 
-            let fido2Assertion = DfnsApi.Fido2Assertion(kind: "Fido2", credentialAssertion: credentialAssertion)
+                let fido2Assertion = DfnsApi.Fido2Assertion(kind: "Fido2", credentialAssertion: credentialAssertion)
 
-            completion(fido2Assertion, nil)
-        }, reject: { code, message, error in
-            let exception = PasskeysSignerError.unexpected(code: code, message: message, error: error)
-            completion(nil, exception)
-        })
+                continuation.resume(returning: fido2Assertion)
+            }, reject: { code, message, error in
+                continuation.resume(throwing: PasskeysSignerError.unexpected(code: code, message: message, error: error))
+            })
+        }
+    }
+
+    /// Raw IDs of the WebAuthn credentials the challenge allows, so the platform only offers those
+    /// passkeys. An empty list leaves the request unrestricted.
+    static func allowedCredentialIds(_ challenge: DfnsApi.UserActionChallenge) -> [Data] {
+        return challenge.allowCredentials.webauthn.compactMap { Data(base64Encoded: Utils.base64URLUnescaped($0.id)) }
     }
 
     private func extractFromAuthResultValue(_ authResult: NSDictionary, path: [String]) -> String {

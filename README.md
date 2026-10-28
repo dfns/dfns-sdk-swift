@@ -15,6 +15,8 @@ This means that while we've worked hard to ensure its functionality there may st
 
 `File` > `Add Packages Dependencies` > `Search or Enter Package URL` > `https://github.com/dfns/dfns-sdk-swift`
 
+Requires Xcode 16 or later (Swift 6 toolchain). The SDK is data-race safe under the Swift 6 language mode: its models and `PasskeysSigner` are `Sendable`, and `create`/`sign` can be awaited from any actor.
+
 ## Concepts
 
 ### `PasskeySigner`

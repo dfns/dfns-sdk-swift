@@ -1,4 +1,4 @@
-// swift-tools-version: 5.10
+// swift-tools-version: 6.0
 // The swift-tools-version declares the minimum version of Swift required to build this package.
 
 import PackageDescription
@@ -21,10 +21,16 @@ let package = Package(
     targets: [
         // Targets are the basic building blocks of a package, defining a module or a test suite.
         // Targets can depend on other targets in this package and products from dependencies.
+        // Swift tools 6.0 builds every target in the Swift 6 language mode, so data-race safety is
+        // enforced by the compiler on each build.
         .target(
             name: "DfnsSdk"),
         .testTarget(
             name: "DfnsSdkTests",
+            dependencies: ["DfnsSdk"]),
+        // Uses the SDK through a plain `import`, the way an app does, to pin its Swift 6 public API.
+        .testTarget(
+            name: "DfnsSdkConcurrencyTests",
             dependencies: ["DfnsSdk"]),
     ]
 )
