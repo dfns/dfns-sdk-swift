@@ -4,9 +4,16 @@
 
 import AuthenticationServices
 
+// DFNS addition: main-actor isolated, since AuthenticationServices must be driven from the main thread
+@MainActor
 @objc(Passkey)
 class Passkey: NSObject {
   var passKeyDelegate: PasskeyDelegate?;
+
+  // DFNS addition: lets a nonisolated owner (PasskeysSigner) create the instance
+  nonisolated override init() {
+    super.init()
+  }
 
   @objc(register:withChallenge:withDisplayName:withUserId:withSecurityKey:withResolver:withRejecter:)
   func register(_ identifier: String, challenge: String, displayName: String, userId: String, securityKey: Bool, resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) -> Void {
