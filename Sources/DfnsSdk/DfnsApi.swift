@@ -2,7 +2,7 @@
     Types defined in the Dfns API that might be arguments or return values of the demo server
  */
 public enum DfnsApi {
-    public struct UserActionChallenge: Codable {
+    public struct UserActionChallenge: Codable, Sendable {
         public init(attestation: String, userVerification: String, externalAuthenticationUrl: String, challenge: String, challengeIdentifier: String, supportedCredentialKinds: [DfnsApi.SupportedCredentialKind], allowCredentials: DfnsApi.AllowCredentials) {
             self.attestation = attestation
             self.userVerification = userVerification
@@ -22,7 +22,7 @@ public enum DfnsApi {
         public let allowCredentials: AllowCredentials
     }
 
-    public struct UserRegistrationChallenge: Codable {
+    public struct UserRegistrationChallenge: Codable, Sendable {
         public init(temporaryAuthenticationToken: String, user: DfnsApi.UserInformation, supportedCredentialKinds: DfnsApi.SupportedCredentialKinds, otpUrl: String, challenge: String, authenticatorSelection: DfnsApi.AuthenticatorSelectionCriteria, attestation: String, pubKeyCredParams: [DfnsApi.PublicKeyCredentialParameters], excludeCredentials: [DfnsApi.PublicKeyCredentialDescriptor]) {
             self.temporaryAuthenticationToken = temporaryAuthenticationToken
             self.user = user
@@ -46,7 +46,7 @@ public enum DfnsApi {
         public let excludeCredentials: [PublicKeyCredentialDescriptor]
     }
 
-    public struct RelyingParty: Codable {
+    public struct RelyingParty: Codable, Sendable {
         public init(id: String, name: String) {
             self.id = id
             self.name = name
@@ -56,7 +56,7 @@ public enum DfnsApi {
         public let name: String
     }
 
-    public struct SupportedCredentialKind: Codable {
+    public struct SupportedCredentialKind: Codable, Sendable {
         public init(kind: String, factor: String, requiresSecondFactor: Bool) {
             self.kind = kind
             self.factor = factor
@@ -68,7 +68,7 @@ public enum DfnsApi {
         public let requiresSecondFactor: Bool
     }
 
-    public struct AllowCredentials: Codable {
+    public struct AllowCredentials: Codable, Sendable {
         public init(webauthn: [DfnsApi.PublicKeyCredentialDescriptor], key: [DfnsApi.PublicKeyCredentialDescriptor]) {
             self.webauthn = webauthn
             self.key = key
@@ -78,7 +78,7 @@ public enum DfnsApi {
         public let key: [PublicKeyCredentialDescriptor]
     }
 
-    public struct PublicKeyCredentialDescriptor: Codable {
+    public struct PublicKeyCredentialDescriptor: Codable, Sendable {
         public init(type: String, id: String) {
             self.type = type
             self.id = id
@@ -88,7 +88,7 @@ public enum DfnsApi {
         public let id: String
     }
 
-    public struct Fido2Assertion: Codable {
+    public struct Fido2Assertion: Codable, Sendable {
         public init(kind: String, credentialAssertion: DfnsApi.Fido2AssertionData) {
             self.kind = kind
             self.credentialAssertion = credentialAssertion
@@ -98,7 +98,7 @@ public enum DfnsApi {
         public let credentialAssertion: Fido2AssertionData
     }
 
-    public struct UserActionAssertion: Codable {
+    public struct UserActionAssertion: Codable, Sendable {
         public init(challengeIdentifier: String, firstFactor: DfnsApi.Fido2Assertion) {
             self.challengeIdentifier = challengeIdentifier
             self.firstFactor = firstFactor
@@ -108,7 +108,7 @@ public enum DfnsApi {
         public let firstFactor: Fido2Assertion
     }
 
-    public struct ClientData: Codable {
+    public struct ClientData: Codable, Sendable {
         public init(type: String, challenge: String, origin: String) {
             self.type = type
             self.challenge = challenge
@@ -121,7 +121,7 @@ public enum DfnsApi {
         // public let crossOrigin: Bool
     }
 
-    public struct Fido2AssertionData: Codable {
+    public struct Fido2AssertionData: Codable, Sendable {
         public init(clientData: String, credId: String, signature: String, authenticatorData: String, userHandle: String? = nil) {
             self.clientData = clientData
             self.credId = credId
@@ -137,7 +137,7 @@ public enum DfnsApi {
         public var userHandle: String?
     }
 
-    public struct PublicKeyCredentialParameters: Codable {
+    public struct PublicKeyCredentialParameters: Codable, Sendable {
         public init(type: String, alg: Int) {
             self.type = type
             self.alg = alg
@@ -147,7 +147,7 @@ public enum DfnsApi {
         public let alg: Int
     }
 
-    public struct SupportedCredentialKinds: Codable {
+    public struct SupportedCredentialKinds: Codable, Sendable {
         public init(firstFactor: [String], secondFactor: [String]) {
             self.firstFactor = firstFactor
             self.secondFactor = secondFactor
@@ -157,7 +157,7 @@ public enum DfnsApi {
         public let secondFactor: [String]
     }
 
-    public struct UserInformation: Codable {
+    public struct UserInformation: Codable, Sendable {
         public init(id: String, displayName: String, name: String) {
             self.id = id
             self.displayName = displayName
@@ -169,7 +169,7 @@ public enum DfnsApi {
         public let name: String
     }
 
-    public struct AuthenticatorSelectionCriteria: Codable {
+    public struct AuthenticatorSelectionCriteria: Codable, Sendable {
         public init(authenticatorAttachment: String? = nil, residentKey: String, requireResidentKey: Bool, userVerification: String) {
             self.authenticatorAttachment = authenticatorAttachment
             self.residentKey = residentKey
@@ -183,7 +183,7 @@ public enum DfnsApi {
         public let userVerification: String
     }
 
-    public struct Fido2Attestation: Codable {
+    public struct Fido2Attestation: Codable, Sendable {
         public init(credentialInfo: DfnsApi.Fido2AttestationData, credentialKind: String) {
             self.credentialInfo = credentialInfo
             self.credentialKind = credentialKind
@@ -193,7 +193,7 @@ public enum DfnsApi {
         public let credentialKind: String
     }
 
-    public struct Fido2AttestationData: Codable {
+    public struct Fido2AttestationData: Codable, Sendable {
         public init(attestationData: String, clientData: String, credId: String) {
             self.attestationData = attestationData
             self.clientData = clientData
