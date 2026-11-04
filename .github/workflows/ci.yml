@@ -5,14 +5,25 @@ on:
     branches: [m]
   pull_request:
 
+permissions:
+  contents: read
+
 concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
   test:
-    name: Build & test
+    name: Build & test (Xcode ${{ matrix.xcode }})
     runs-on: macos-15
+    strategy:
+      fail-fast: false
+      matrix:
+        # Oldest Swift 6 compiler (Xcode 16.0 = Swift 6.0) and the newest available. The package is
+        # built in the Swift 6 language mode, whose data-race checks differ between compiler versions.
+        xcode: ['16.0', '26.3']
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_${{ matrix.xcode }}.app/Contents/Developer
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -20,7 +31,7 @@ jobs:
       - name: Swift version
         run: swift --version
 
-      # Builds the macOS slice and runs the unit tests (Utils + DfnsApi Codable).
+      # Builds the macOS slice and runs the unit tests (Utils, DfnsApi Codable, Swift 6 concurrency).
       - name: Run unit tests
         run: swift test
 
