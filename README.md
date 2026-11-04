@@ -5,12 +5,6 @@ Welcome, builders 👋🔑 This repo holds Dfns Swift SDK. Useful links:
 - [Dfns Website](https://www.dfns.co)
 - [Dfns API Docs](https://docs.dfns.co)
 
-## BETA Warning
-
-:warning: **Attention: This project is currently in BETA.**
-
-This means that while we've worked hard to ensure its functionality there may still be bugs, performance issues, or unexpected behavior.
-
 ## Requirements
 
 - **iOS 15.0 or later.** The SDK relies on Apple's passkey APIs (`ASAuthorizationPlatformPublicKeyCredentialProvider`), introduced in iOS 15. On earlier versions, registration and signing fail with a `NotSupported` error. On iOS 15 passkeys were a developer preview (behind the "Syncing Platform Authenticator" setting); they are enabled by default from **iOS 16**, which is the practical minimum for production use.
