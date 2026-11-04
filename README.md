@@ -7,8 +7,10 @@ Welcome, builders 👋🔑 This repo holds Dfns Swift SDK. Useful links:
 
 ## Requirements
 
-- **iOS 15.0 or later.** The SDK relies on Apple's passkey APIs (`ASAuthorizationPlatformPublicKeyCredentialProvider`), introduced in iOS 15. On earlier versions, registration and signing fail with a `NotSupported` error. On iOS 15 passkeys were a developer preview (behind the "Syncing Platform Authenticator" setting); they are enabled by default from **iOS 16**, which is the practical minimum for production use.
-- **Device passcode set.** The device must have a passcode (with Face ID or Touch ID where available), and iCloud Keychain enabled — iOS prompts the user to enable it on first passkey creation.
+- **Xcode 16 or later** (Swift 6.0 toolchain). CI builds and tests the SDK with Xcode 16.0 and 26.3. Your app can use either the Swift 5 or the Swift 6 language mode.
+- **iOS 15.0 or later** as your app's deployment target. The SDK relies on Apple's passkey APIs (`ASAuthorizationPlatformPublicKeyCredentialProvider`), introduced in iOS 15. On iOS 15 passkeys were a developer preview (behind the "Syncing Platform Authenticator" setting). They are enabled by default from **iOS 16**, which is the practical minimum for production use. iPadOS follows the same versions.
+- **iOS only.** The package also declares macOS 12 so that its platform-independent code can be unit-tested on a Mac. Passkey signing is not supported on macOS.
+- **Device passcode set.** The device must have a passcode (with Face ID or Touch ID where available), and iCloud Keychain enabled. iOS prompts the user to enable it on first passkey creation.
 - **Associated Domains entitlement.** Your app must declare the `webcredentials:your-domain.com` associated domain, and the relying-party domain must serve a matching `apple-app-site-association` file.
 - **Hardware security keys** (e.g. YubiKey) are supported as an alternative to platform passkeys, also from iOS 15.
 
@@ -16,7 +18,7 @@ Welcome, builders 👋🔑 This repo holds Dfns Swift SDK. Useful links:
 
 `File` > `Add Packages Dependencies` > `Search or Enter Package URL` > `https://github.com/dfns/dfns-sdk-swift`
 
-Requires Xcode 16 or later (Swift 6 toolchain). The SDK is data-race safe under the Swift 6 language mode: its models and `PasskeysSigner` are `Sendable`, and `create`/`sign` can be awaited from any actor.
+The SDK is data-race safe under the Swift 6 language mode: its models and `PasskeysSigner` are `Sendable`, and `create`/`sign` can be awaited from any actor.
 
 ## Concepts
 
@@ -51,24 +53,20 @@ A demo application using the SDK can be found [here](https://github.com/dfns/dfn
 
 #### Prerequisites
 
-To run the demo application on an iOS device, you must have an `Application` for iOS. To create a new `Application`, go to `Dfns Dashboard` > `Settings` > `Org Settings` > `Applications` > `New Application`, and enter the following information
+The demo app targets iOS 17.4 or later.
 
-- Name, choose any name, for example `Dfns Tutorial iOS`
-- Application Type, leave as the default `Default Application`
-- Relying Party, set to the domain you associated with the app, e.g. `panda-new-kit.ngrok-free.app`
-- Origin, set to the full url of the domain, e.g. `https://panda-new-kit.ngrok-free.app`
-
-After the `Application` is created, copy and save the `App ID`, e.g. `ap-39abb-5nrrm-9k59k0u3jup3vivo`.
+To run the demo application, you must first whitelist the domain associated with the app (the [Relying Party](https://www.w3.org/TR/webauthn-2/#relying-party)), e.g. `airedale-finer-baboon.ngrok-free.app`. Go to `Dfns Dashboard` > `Settings` > `Webauthn Relying Party` and add the domain. See [WebAuthn configuration](https://docs.dfns.co/guides/developers/webauthn-configuration) for details.
 
 #### Configuration
 
 In the `./DfnsDemo/DfnsDemo/Config.swift` set the following values,
 
-- `url` = either `http://localhost:8000` or if using ngrok, the public url `https://panda-new-kit.ngrok-free.app`
+- `serverUrl` = either `http://localhost:8000` or if using ngrok, the public url, e.g. `https://airedale-finer-baboon.ngrok-free.app` (your ngrok url may end with `.dev` instead, that works too)
+- `passkeyRelyingPartyId` = the domain you whitelisted above, e.g. `airedale-finer-baboon.ngrok-free.app`
 
 #### Modify associated domain entitlement
 
-For iOS to download the correct `apple-app-site-association` file, you need to modify the associated domain entitlement configuration to point to the right location. Open the file `./DfnsDemo/DfnsDemo/DfnsDemo.entitlements` and change the string value `webcredentials:panda-new-kit.ngrok-free.app?mode=developer` to match your domain.
+For iOS to download the correct `apple-app-site-association` file, you need to modify the associated domain entitlement configuration to point to the right location. Open the file `./DfnsDemo/DfnsDemo/DfnsDemo.entitlements` and change the string value `webcredentials:airedale-finer-baboon.ngrok-free.app?mode=developer` to match your domain.
 
 #### Team Id
 
