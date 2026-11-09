@@ -1,9 +1,8 @@
 import XCTest
 @testable import DfnsSdk
 
-/// Tests for `PasskeysSigner` construction. The register/sign operations themselves drive the
-/// platform passkey UI and can't run headless, but the initializer's validation (which mirrors the
-/// other DFNS frontend SDKs) is pure and worth pinning down.
+/// Tests for `PasskeysSigner`. Register and sign drive the platform passkey UI and can't run
+/// headless, so these tests cover the initializer and the pure parsing helpers.
 final class PasskeysSignerTests: XCTestCase {
     func testInitSucceedsWithValidRelyingParty() throws {
         XCTAssertNoThrow(
@@ -27,7 +26,7 @@ final class PasskeysSignerTests: XCTestCase {
         XCTAssertEqual(PasskeysSigner.defaultWaitTimeout, 60000)
     }
 
-    func testAllowedCredentialIdsDecodesWebauthnCredentials() {
+    func testAllowedCredentialIdsDecodesWebauthnAndKeyCredentials() {
         let challenge = makeChallenge(
             webauthn: [
                 DfnsApi.PublicKeyCredentialDescriptor(type: "public-key", id: "aGVsbG8"),
@@ -38,7 +37,7 @@ final class PasskeysSignerTests: XCTestCase {
 
         XCTAssertEqual(
             PasskeysSigner.allowedCredentialIds(challenge),
-            [Data("hello".utf8), Data([0xFB, 0xFF])]
+            [Data("hello".utf8), Data([0xFB, 0xFF]), Data("key".utf8)]
         )
     }
 
@@ -46,6 +45,44 @@ final class PasskeysSignerTests: XCTestCase {
         let challenge = makeChallenge(webauthn: [], key: [])
 
         XCTAssertEqual(PasskeysSigner.allowedCredentialIds(challenge), [])
+    }
+
+    func testMissingUserIDProducesNilUserHandle() {
+        let authResult: NSDictionary = [
+            "credentialID": "Y3JlZA",
+            "response": [
+                "rawClientDataJSON": "e30",
+                "signature": "c2ln",
+                "rawAuthenticatorData": "YXV0aA",
+            ] as NSDictionary,
+        ]
+
+        XCTAssertNil(PasskeysSigner.userHandle(from: authResult))
+    }
+
+    func testWrongTypeAtRawClientDataJSONThrows() throws {
+        let signer = try PasskeysSigner(relyingParty: DfnsApi.RelyingParty(id: "acme.com", name: "Acme"))
+        let authResult: NSDictionary = [
+            "response": ["rawClientDataJSON": 1] as NSDictionary,
+        ]
+
+        XCTAssertThrowsError(
+            try signer.extractFromAuthResultValue(authResult, path: ["response", "rawClientDataJSON"])
+        ) { error in
+            guard case PasskeysSignerError.unexpected = error else {
+                XCTFail("expected PasskeysSignerError.unexpected")
+                return
+            }
+        }
+    }
+
+    func testAllowedCredentialIdsReturnsOneIDForOneWebauthnDescriptor() {
+        let challenge = makeChallenge(
+            webauthn: [DfnsApi.PublicKeyCredentialDescriptor(type: "public-key", id: "aGVsbG8")],
+            key: []
+        )
+
+        XCTAssertEqual(PasskeysSigner.allowedCredentialIds(challenge), [Data("hello".utf8)])
     }
 
     private func makeChallenge(

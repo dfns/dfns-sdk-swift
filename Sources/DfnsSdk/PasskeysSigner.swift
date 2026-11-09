@@ -51,13 +51,22 @@ public final class PasskeysSigner: Sendable {
         return try await withCheckedThrowingContinuation { continuation in
             passkey.register(self.relyingParty.id, challenge: challengeBase64url, displayName: displayName, userId: userId, securityKey: false,
                              resolve: { authResult in
-                                 let credentialInfo = DfnsApi.Fido2AttestationData(
-                                     attestationData: self.extractFromAuthResultValue(authResult, path: ["response", "rawAttestationObject"]),
-                                     clientData: self.extractFromAuthResultValue(authResult, path: ["response", "rawClientDataJSON"]),
-                                     credId: self.extractFromAuthResultValue(authResult, path: ["credentialID"])
-                                 )
-                                 let fido2Attestation = DfnsApi.Fido2Attestation(credentialInfo: credentialInfo, credentialKind: "Fido2")
-                                 continuation.resume(returning: fido2Attestation)
+                                 do {
+                                     guard let attestationData = try self.extractFromAuthResultValue(authResult, path: ["response", "rawAttestationObject"]),
+                                           let clientData = try self.extractFromAuthResultValue(authResult, path: ["response", "rawClientDataJSON"]),
+                                           let credId = try self.extractFromAuthResultValue(authResult, path: ["credentialID"]) else {
+                                         throw PasskeysSignerError.unexpected(code: nil, message: "Passkey response is missing a required field", error: nil)
+                                     }
+                                     let credentialInfo = DfnsApi.Fido2AttestationData(
+                                         attestationData: attestationData,
+                                         clientData: clientData,
+                                         credId: credId
+                                     )
+                                     let fido2Attestation = DfnsApi.Fido2Attestation(credentialInfo: credentialInfo, credentialKind: "Fido2")
+                                     continuation.resume(returning: fido2Attestation)
+                                 } catch {
+                                     continuation.resume(throwing: error)
+                                 }
                              }, reject: { code, message, error in
                                  continuation.resume(throwing: PasskeysSignerError.unexpected(code: code, message: message, error: error))
                              })
@@ -76,35 +85,70 @@ public final class PasskeysSigner: Sendable {
 
         return try await withCheckedThrowingContinuation { continuation in
             passkey.authenticate(self.relyingParty.id, challenge: challengeBase64url, securityKey: false, allowedCredentials: allowedCredentials, resolve: { authResult in
-                let credentialAssertion = DfnsApi.Fido2AssertionData(
-                    clientData: self.extractFromAuthResultValue(authResult, path: ["response", "rawClientDataJSON"]),
-                    credId: self.extractFromAuthResultValue(authResult, path: ["credentialID"]),
-                    signature: self.extractFromAuthResultValue(authResult, path: ["response", "signature"]),
-                    authenticatorData: self.extractFromAuthResultValue(authResult, path: ["response", "rawAuthenticatorData"]),
-                    userHandle: Utils.base64URLEscape((authResult["userID"] as! String).data(using: .utf8)!.base64EncodedString())
-                )
-
-                let fido2Assertion = DfnsApi.Fido2Assertion(kind: "Fido2", credentialAssertion: credentialAssertion)
-
-                continuation.resume(returning: fido2Assertion)
+                do {
+                    guard let clientData = try self.extractFromAuthResultValue(authResult, path: ["response", "rawClientDataJSON"]),
+                          let credId = try self.extractFromAuthResultValue(authResult, path: ["credentialID"]),
+                          let signature = try self.extractFromAuthResultValue(authResult, path: ["response", "signature"]),
+                          let authenticatorData = try self.extractFromAuthResultValue(authResult, path: ["response", "rawAuthenticatorData"]) else {
+                        throw PasskeysSignerError.unexpected(code: nil, message: "Passkey response is missing a required field", error: nil)
+                    }
+                    let credentialAssertion = DfnsApi.Fido2AssertionData(
+                        clientData: clientData,
+                        credId: credId,
+                        signature: signature,
+                        authenticatorData: authenticatorData,
+                        userHandle: PasskeysSigner.userHandle(from: authResult)
+                    )
+                    let fido2Assertion = DfnsApi.Fido2Assertion(kind: "Fido2", credentialAssertion: credentialAssertion)
+                    continuation.resume(returning: fido2Assertion)
+                } catch {
+                    continuation.resume(throwing: error)
+                }
             }, reject: { code, message, error in
                 continuation.resume(throwing: PasskeysSignerError.unexpected(code: code, message: message, error: error))
             })
         }
     }
 
-    /// Raw IDs of the WebAuthn credentials the challenge allows, so the platform only offers those
-    /// passkeys. An empty list leaves the request unrestricted.
+    /// Raw IDs from `allowCredentials.webauthn` and `allowCredentials.key`.
+    /// An empty list leaves the request unrestricted.
     static func allowedCredentialIds(_ challenge: DfnsApi.UserActionChallenge) -> [Data] {
-        return challenge.allowCredentials.webauthn.compactMap { Data(base64Encoded: Utils.base64URLUnescaped($0.id)) }
+        let descriptors = challenge.allowCredentials.webauthn + challenge.allowCredentials.key
+        return descriptors.compactMap { Data(base64Encoded: Utils.base64URLUnescaped($0.id)) }
     }
 
-    private func extractFromAuthResultValue(_ authResult: NSDictionary, path: [String]) -> String {
-        var path = path
-        if path.count == 1 {
-            return Utils.base64URLEscape(authResult[path.removeFirst()] as! String)
-        } else {
-            return extractFromAuthResultValue(authResult[path.removeFirst()] as! NSDictionary, path: path)
+    /// User handle for an assertion. Nil when the callback has no string `userID`.
+    static func userHandle(from authResult: NSDictionary) -> String? {
+        guard let userID = authResult["userID"] as? String else {
+            return nil
         }
+        guard let encoded = userID.data(using: .utf8)?.base64EncodedString() else {
+            return nil
+        }
+        return Utils.base64URLEscape(encoded)
+    }
+
+    func extractFromAuthResultValue(_ authResult: NSDictionary, path: [String]) throws -> String? {
+        guard let key = path.first else {
+            throw PasskeysSignerError.unexpected(code: nil, message: "Passkey response path is empty", error: nil)
+        }
+        let value = authResult[key]
+        let rest = Array(path.dropFirst())
+        if rest.isEmpty {
+            if value == nil || value is NSNull {
+                return nil
+            }
+            guard let string = value as? String else {
+                throw PasskeysSignerError.unexpected(code: nil, message: "Passkey response value at \(key) has an unexpected type", error: nil)
+            }
+            return Utils.base64URLEscape(string)
+        }
+        if value == nil || value is NSNull {
+            return nil
+        }
+        guard let nested = value as? NSDictionary else {
+            throw PasskeysSignerError.unexpected(code: nil, message: "Passkey response value at \(key) has an unexpected type", error: nil)
+        }
+        return try extractFromAuthResultValue(nested, path: rest)
     }
 }
