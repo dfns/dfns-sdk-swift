@@ -26,7 +26,7 @@ final class PasskeysSignerTests: XCTestCase {
         XCTAssertEqual(PasskeysSigner.defaultWaitTimeout, 60000)
     }
 
-    func testAllowedCredentialIdsDecodesWebauthnAndKeyCredentials() {
+    func testAllowedCredentialIdsDecodesWebauthnCredentials() throws {
         let challenge = makeChallenge(
             webauthn: [
                 DfnsApi.PublicKeyCredentialDescriptor(type: "public-key", id: "aGVsbG8"),
@@ -36,15 +36,53 @@ final class PasskeysSignerTests: XCTestCase {
         )
 
         XCTAssertEqual(
-            PasskeysSigner.allowedCredentialIds(challenge),
-            [Data("hello".utf8), Data([0xFB, 0xFF]), Data("key".utf8)]
+            try PasskeysSigner.allowedCredentialIds(challenge),
+            [Data("hello".utf8), Data([0xFB, 0xFF])]
         )
     }
 
-    func testAllowedCredentialIdsIsEmptyWhenChallengeAllowsNone() {
+    func testAllowedCredentialIdsIsEmptyWhenChallengeAllowsNone() throws {
         let challenge = makeChallenge(webauthn: [], key: [])
 
-        XCTAssertEqual(PasskeysSigner.allowedCredentialIds(challenge), [])
+        XCTAssertEqual(try PasskeysSigner.allowedCredentialIds(challenge), [])
+    }
+
+    func testEmptyUserIDProducesNilUserHandle() {
+        let authResult: NSDictionary = ["userID": ""]
+
+        XCTAssertNil(PasskeysSigner.userHandle(from: authResult))
+    }
+
+    func testPresentUserIDIsBase64UrlEncoded() {
+        let authResult: NSDictionary = ["userID": "abc"]
+
+        XCTAssertEqual(PasskeysSigner.userHandle(from: authResult), "YWJj")
+    }
+
+    func testAllowedCredentialIdsThrowsWhenNoneDecode() {
+        let challenge = makeChallenge(
+            webauthn: [DfnsApi.PublicKeyCredentialDescriptor(type: "public-key", id: "****")],
+            key: [DfnsApi.PublicKeyCredentialDescriptor(type: "public-key", id: "a2V5")]
+        )
+
+        XCTAssertThrowsError(try PasskeysSigner.allowedCredentialIds(challenge)) { error in
+            guard case PasskeysSignerError.unexpected = error else {
+                XCTFail("expected PasskeysSignerError.unexpected")
+                return
+            }
+        }
+    }
+
+    func testAllowedCredentialIdsKeepsIdsThatDecode() throws {
+        let challenge = makeChallenge(
+            webauthn: [
+                DfnsApi.PublicKeyCredentialDescriptor(type: "public-key", id: "aGVsbG8"),
+                DfnsApi.PublicKeyCredentialDescriptor(type: "public-key", id: "****"),
+            ],
+            key: []
+        )
+
+        XCTAssertEqual(try PasskeysSigner.allowedCredentialIds(challenge), [Data("hello".utf8)])
     }
 
     func testMissingUserIDProducesNilUserHandle() {
@@ -76,13 +114,13 @@ final class PasskeysSignerTests: XCTestCase {
         }
     }
 
-    func testAllowedCredentialIdsReturnsOneIDForOneWebauthnDescriptor() {
+    func testAllowedCredentialIdsReturnsOneIDForOneWebauthnDescriptor() throws {
         let challenge = makeChallenge(
             webauthn: [DfnsApi.PublicKeyCredentialDescriptor(type: "public-key", id: "aGVsbG8")],
             key: []
         )
 
-        XCTAssertEqual(PasskeysSigner.allowedCredentialIds(challenge), [Data("hello".utf8)])
+        XCTAssertEqual(try PasskeysSigner.allowedCredentialIds(challenge), [Data("hello".utf8)])
     }
 
     private func makeChallenge(

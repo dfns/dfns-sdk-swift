@@ -81,7 +81,7 @@ public final class PasskeysSigner: Sendable {
     @MainActor
     private func authenticate(challenge: DfnsApi.UserActionChallenge) async throws -> DfnsApi.Fido2Assertion {
         let challengeBase64url = Utils.base64URLUnescaped(challenge.challenge)
-        let allowedCredentials = PasskeysSigner.allowedCredentialIds(challenge)
+        let allowedCredentials = try PasskeysSigner.allowedCredentialIds(challenge)
 
         return try await withCheckedThrowingContinuation { continuation in
             passkey.authenticate(self.relyingParty.id, challenge: challengeBase64url, securityKey: false, allowedCredentials: allowedCredentials, resolve: { authResult in
@@ -110,16 +110,22 @@ public final class PasskeysSigner: Sendable {
         }
     }
 
-    /// Raw IDs from `allowCredentials.webauthn` and `allowCredentials.key`.
-    /// An empty list leaves the request unrestricted.
-    static func allowedCredentialIds(_ challenge: DfnsApi.UserActionChallenge) -> [Data] {
-        let descriptors = challenge.allowCredentials.webauthn + challenge.allowCredentials.key
-        return descriptors.compactMap { Data(base64Encoded: Utils.base64URLUnescaped($0.id)) }
+    /// WebAuthn credential ids from `allowCredentials.webauthn`.
+    /// Key ids stay out: they belong to the key signer, not this passkey request.
+    /// An empty list leaves the request unrestricted. A non-empty list that decodes
+    /// to nothing throws, because an empty platform list would allow any passkey.
+    static func allowedCredentialIds(_ challenge: DfnsApi.UserActionChallenge) throws -> [Data] {
+        let descriptors = challenge.allowCredentials.webauthn
+        let ids = descriptors.compactMap { Data(base64Encoded: Utils.base64URLUnescaped($0.id)) }
+        if !descriptors.isEmpty && ids.isEmpty {
+            throw PasskeysSignerError.unexpected(code: nil, message: "Allow list did not decode to any credential id", error: nil)
+        }
+        return ids
     }
 
-    /// User handle for an assertion. Nil when the callback has no string `userID`.
+    /// User handle for an assertion. Nil when `userID` is missing or empty.
     static func userHandle(from authResult: NSDictionary) -> String? {
-        guard let userID = authResult["userID"] as? String else {
+        guard let userID = authResult["userID"] as? String, !userID.isEmpty else {
             return nil
         }
         guard let encoded = userID.data(using: .utf8)?.base64EncodedString() else {
